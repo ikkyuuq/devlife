@@ -2,7 +2,9 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
+    "dev": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "thekittipongpras",
@@ -13,5 +15,10 @@
     "express": "^5.0.0",
     "lucia": "^3.2.0",
     "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.1",
+    "eslint": "^9.11.1",
+    "globals": "^15.9.0"
   }
 }
