@@ -1,16 +1,27 @@
-import { Button } from "./components/ui/button";
 import { useLocation } from "react-router-dom";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogTitle,
-  DialogDescription,
-  DialogHeader,
-  DialogContent,
-} from "./components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import AuthDialog from "@/components/AuthDialog";
+import { AuthFormData, authSchema } from "@/schemas/authSchema";
+
 export const Header = () => {
   const location = useLocation();
   const isRoot = location.pathname === "/";
+
+  const form = useForm<AuthFormData>({
+    resolver: zodResolver(authSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSignInSubmit = (values: AuthFormData) => {
+    console.log(values);
+  };
+  const onSignUpSubmit = (values: AuthFormData) => {
+    console.log(values);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 mx-auto w-full max-w-7xl flex justify-between items-center py-4">
@@ -33,40 +44,11 @@ export const Header = () => {
         </ul>
       </div>
       <div className="flex gap-4">
-        <Dialog>
-          <DialogTrigger>
-            <Button variant={"ghost"}>Sign in</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Sign in</DialogTitle>
-              <DialogDescription>Welcome come back stranger</DialogDescription>
-            </DialogHeader>
-            <div>
-              <label htmlFor="email">Email</label>
-              <input type="email" id="email" />
-              <label htmlFor="password">Password</label>
-              <input type="password" id="password" />
-            </div>
-          </DialogContent>
-        </Dialog>
-        <Dialog>
-          <DialogTrigger>
-            <Button variant={"outline"}>Sign up</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Sign up</DialogTitle>
-              <DialogDescription>Welcome come stranger</DialogDescription>
-            </DialogHeader>
-            <div>
-              <label htmlFor="email">Email</label>
-              <input type="email" id="email" />
-              <label htmlFor="password">Password</label>
-              <input type="password" id="password" />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <AuthDialog
+          form={form}
+          onSignInSubmit={onSignInSubmit}
+          onSignUpSubmit={onSignUpSubmit}
+        />
       </div>
     </nav>
   );
