@@ -1,6 +1,17 @@
 import express from "express";
+import cookieParser from "cookie-parser";
+import { db } from "../configs/db.js";
+import { lucia } from "../configs/auth.js";
+
+import AuthController from "../controllers/auth.controller.js";
+import AuthService from "../services/auth.service.js";
 
 export const signupRouter = express.Router();
+signupRouter.use(express.json());
+signupRouter.use(cookieParser());
+
+const authService = new AuthService(db, lucia);
+const authController = new AuthController(authService);
 
 /**
  * @openapi
@@ -11,13 +22,16 @@ export const signupRouter = express.Router();
  *     summary: Signin with existing session
  *     description: Signin with existing session
  *     responses:
+ *       400:
+ *         description: already signed in
  *       200:
- *         description: Redirect to /
+ *         description: No active session. Client can proceed with signup
+ *       500:
+ *         description: An error occurred during session validation
  */
-signupRouter.get("/signup", async (_, res) => {
-  res.send("Signup route with existing session");
-  // send status 200 and redirect to "/" if user is already signed in
-});
+signupRouter.get("/signup", async (req, res) =>
+  authController.isSignUpAvailable(req, res),
+);
 
 /**
  * @openapi
@@ -46,6 +60,6 @@ signupRouter.get("/signup", async (_, res) => {
  *       401:
  *         description: Invalid email or password
  */
-signupRouter.post("/signup", async (req, res) => {
-  res.send("Signup route");
-});
+signupRouter.post("/signup", async (req, res) =>
+  authController.signUp(req, res),
+);
