@@ -1,6 +1,17 @@
 import express from "express";
+import cookieParser from "cookie-parser";
+import { db } from "../configs/db.js";
+import { lucia } from "../configs/auth.js";
+
+import AuthController from "../controllers/auth.controller.js";
+import AuthService from "../services/auth.service.js";
 
 export const signinRouter = express.Router();
+signinRouter.use(express.json());
+signinRouter.use(cookieParser());
+
+const authService = new AuthService(db, lucia);
+const authController = new AuthController(authService);
 
 /**
  * @openapi
@@ -8,8 +19,8 @@ export const signinRouter = express.Router();
  *   get:
  *     tags:
  *       - Authentication
- *     summary: Signin with existing session
- *     description: Signin with existing session
+ *     summary: Is signin available?
+ *     description: if user is already signed in, client will recieve a 400 status code and cannot proceed with signin form.
  *     responses:
  *       200:
  *         description: Redirect to /
@@ -48,6 +59,6 @@ signinRouter.get("/signin", async (_, res) => {
  *       401:
  *         description: Unauthorized
  */
-signinRouter.post("/signin", async (req, res) => {
-  res.send("Signin with new session");
-});
+signinRouter.post("/signin", async (req, res) =>
+  authController.signIn(req, res),
+);

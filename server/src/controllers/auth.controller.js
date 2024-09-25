@@ -7,14 +7,73 @@ export default class AuthController {
     this.#authService = authService;
   }
 
+  async signIn(req, res) {
+    // Get email and password from the request body
+    const email = req.body.email;
+    const password = req.body.email;
+
+    // Validate the email
+    const isValidEmail = await this.#authService.validateEmail(email);
+    if (!isValidEmail) {
+      return res.status(401).send({ error: "Invalid Email" });
+    }
+
+    // Validate the password
+    const isValidPassword = await this.#authService.validatePassword(
+      email,
+      password,
+    );
+    if (!isValidPassword) {
+      return res.status(401).send({ error: "Invalid Password" });
+    }
+
+    // Get the user and session from the database
+    const { user, session } = await this.#authService.getUser(email);
+
+    // If the user does not exist, return 401
+    if (!user) return res.status(401).send({ error: "User not found" });
+
+    // If the user does not have a session, create a new session and set it to the cookie.
+    if (!session) {
+      const newSession = await this.#authService.createSession(user.id, {});
+      const sessionCookie = this.#authService.createSessionCookie(
+        newSession.id,
+      );
+      return res
+        .status(200)
+        .cookie("session", sessionCookie)
+        .send({ message: "Successful signin" });
+    }
+
+    // If the use already has a session, use the existing session to set to the cookie.
+    const sessionCookie = this.#authService.createSessionCookie(session.id);
+    return res
+      .status(200)
+      .cookie("session", sessionCookie)
+      .send({ message: "Successful signin" });
+  }
+
+  async signOut(req, res) {
+    if (!req.cookies.session) {
+      return res.status(401).send({ error: "No active session" });
+    }
+    await this.#authService.deleteSession(req.cookies.session);
+    // Clear the session cookie
+    return res
+      .status(200)
+      .clearCookie("session")
+      .json({ message: "Successful signout" });
+  }
+
   async isSignUpAvailable(req, res) {
     try {
       // Validate the current session with the session cookie
       // if the session is valid, return 400 that means the user is already signed in
       // else return 200 that means the user can proceed with signup
-      const session = await this.#authService.validateSession(
+      const { session } = await this.#authService.validateSession(
         req.cookies.session,
       );
+      console.log(session);
 
       if (session) {
         return res.status(400).send({ message: "You are already signed in" });

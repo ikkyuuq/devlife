@@ -1,6 +1,17 @@
 import express from "express";
+import cookieParser from "cookie-parser";
+import { db } from "../configs/db.js";
+import { lucia } from "../configs/auth.js";
+
+import AuthController from "../controllers/auth.controller.js";
+import AuthService from "../services/auth.service.js";
 
 export const signoutRouter = express.Router();
+signoutRouter.use(express.json());
+signoutRouter.use(cookieParser());
+
+const authService = new AuthService(db, lucia);
+const authController = new AuthController(authService);
 
 /**
  * @openapi
@@ -16,9 +27,4 @@ export const signoutRouter = express.Router();
  *     401:
  *       desscription: No session to sign out of
  */
-signoutRouter.post("/signout", (_, res) => {
-  // if no user is signed in, send status 401
-  res.send("You are signed out");
-  // remove user session
-  // send status 200 and redirect to "/" if user is signed in
-});
+signoutRouter.post("/signout", (req, res) => authController.signOut(req, res));

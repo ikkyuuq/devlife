@@ -19,8 +19,8 @@ const authController = new AuthController(authService);
  *   get:
  *     tags:
  *       - Authentication
- *     summary: Signin with existing session
- *     description: Signin with existing session
+ *     summary: Is signup available?
+ *     description: if user is already signed in, client will recieve a 400 status code and cannot proceed with signup form.
  *     responses:
  *       400:
  *         description: already signed in
