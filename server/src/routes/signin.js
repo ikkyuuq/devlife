@@ -27,10 +27,9 @@ const authController = new AuthController(authService);
  *       401:
  *         description: Unauthorized
  */
-signinRouter.get("/signin", async (_, res) => {
-  res.send("Signin with existing session");
-  // send status 200 and redirect to "/" if user is already signed in
-});
+signinRouter.get("/signin", async (req, res) =>
+  authController.isSignInAvailable(req, res),
+);
 
 /**
  * @openapi

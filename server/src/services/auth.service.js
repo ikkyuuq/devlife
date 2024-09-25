@@ -10,7 +10,7 @@ export default class AuthService {
     this.#lucia = lucia;
   }
 
-  async getUser(email) {
+  async getUserSession(email) {
     const user = await this.#db.query.userTable.findFirst({
       where: eq(schema.userTable.email, email),
     });

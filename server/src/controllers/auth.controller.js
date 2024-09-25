@@ -7,10 +7,34 @@ export default class AuthController {
     this.#authService = authService;
   }
 
+  async isSignInAvailable(req, res) {
+    try {
+      // Validate the current session with the session cookie
+      // if the session is valid, return 400 that means the user is already signed in
+      // else return 200 that means the user can proceed with signin
+      const { session } = await this.#authService.validateSession(
+        req.cookies.session,
+      );
+
+      if (session) {
+        return res.status(400).send({ message: "You are already signed in" });
+      } else {
+        return res
+          .status(200)
+          .send({ message: "No active session. Please proceed with signin." });
+      }
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .send({ error: "An error occurred during session validation" });
+    }
+  }
+
   async signIn(req, res) {
     // Get email and password from the request body
     const email = req.body.email;
-    const password = req.body.email;
+    const password = req.body.password;
 
     // Validate the email
     const isValidEmail = await this.#authService.validateEmail(email);
@@ -28,7 +52,7 @@ export default class AuthController {
     }
 
     // Get the user and session from the database
-    const { user, session } = await this.#authService.getUser(email);
+    const { user, session } = await this.#authService.getUserSession(email);
 
     // If the user does not exist, return 401
     if (!user) return res.status(401).send({ error: "User not found" });
@@ -41,7 +65,10 @@ export default class AuthController {
       );
       return res
         .status(200)
-        .cookie("session", sessionCookie)
+        .cookie("session", sessionCookie.value, {
+          htppOnly: true,
+          sameSite: "lax",
+        })
         .send({ message: "Successful signin" });
     }
 
@@ -49,7 +76,10 @@ export default class AuthController {
     const sessionCookie = this.#authService.createSessionCookie(session.id);
     return res
       .status(200)
-      .cookie("session", sessionCookie)
+      .cookie("session", sessionCookie.value, {
+        htppOnly: true,
+        sameSite: "lax",
+      })
       .send({ message: "Successful signin" });
   }
 
@@ -73,7 +103,6 @@ export default class AuthController {
       const { session } = await this.#authService.validateSession(
         req.cookies.session,
       );
-      console.log(session);
 
       if (session) {
         return res.status(400).send({ message: "You are already signed in" });
