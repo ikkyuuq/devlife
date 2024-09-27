@@ -40,3 +40,16 @@ export const userProfileTable = pgTable("user_profile", {
   displayName: text("display_name"),
   rank: integer("rank").notNull().default(0),
 });
+
+export const emailVerificationTable = pgTable("email_verification", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => userTable.id),
+  expiresAt: timestamp("expires_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+});
