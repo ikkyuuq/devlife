@@ -53,3 +53,48 @@ export const emailVerificationTable = pgTable("email_verification", {
     mode: "date",
   }).notNull(),
 });
+
+export const taskTable = pgTable("task", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(), // title of the task
+  objective: text("objective"), // objective of the task
+  tags: text("tags").array().notNull(), // array of tags
+  content: text("content").notNull(), // markdown content
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .notNull()
+    .defaultNow(), // add creation timestamp
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .notNull()
+    .defaultNow(), // last update timestamp
+});
+
+export const taskTestTable = pgTable("task_test", {
+  id: serial("id").primaryKey(),
+  taskId: text("task_id").references(taskTable.id),
+  tests: text("tests").notNull(), // JSON string
+});
+
+export const taskSubmissionTable = pgTable("task_submission", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").references(userTable.id),
+  taskId: text("task_id").references(taskTable.id),
+  status: text("status").notNull(), // status of the submission
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .notNull()
+    .defaultNow(), // submission timestamp
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .notNull()
+    .defaultNow(), // last update timestamp
+});
