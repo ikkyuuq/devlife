@@ -1,10 +1,88 @@
-import { hashPassword } from "../helpers/auth.helper.js";
+import {
+  hashPassword,
+  sendEmailVerificationCode,
+} from "../helpers/auth.helper.js";
 import { generateIdFromEntropySize } from "lucia";
 
 export default class AuthController {
   #authService;
   constructor(authService) {
     this.#authService = authService;
+  }
+
+  // This method is used to request an email verification code
+  // Using with method POST /email-verification-request
+  async emailVerificationRequest(req, res) {
+    // Validate the current session with the session cookie
+    const { user } = await this.#authService.validateSession(
+      req.cookies.session,
+    );
+    console.log(user);
+
+    // If the user does not exist, return 401
+    if (!user) {
+      return res.status(401).send({ error: "Invalid session" });
+    }
+
+    const userData = await this.#authService.getUser(user.id);
+    if (!userData) {
+      return res.status(401).send({ error: "User not found" });
+    }
+    console.log(userData.email);
+
+    // Generate a new email verification code
+    const verificationCode =
+      await this.#authService.generateEmailVerificationCode(user.id);
+    console.log(verificationCode);
+
+    // Send the email verification code to the user email
+    const mailsender = await sendEmailVerificationCode(
+      userData.email,
+      verificationCode,
+    );
+
+    if (!mailsender) {
+      return res.status(500).send({ error: "Email not sent" });
+    }
+
+    return res.status(200).send({ message: "Email verification code sent" });
+  }
+
+  // This method is used to verify the email with the code
+  async emailVerification(req, res) {
+    // Validate the current session with the session cookie
+    const { session, user } = await this.#authService.validateSession(
+      req.cookies.session,
+    );
+
+    // If the session or user does not exist, return 401
+    if (!session || !user) {
+      return res.status(401).send({ error: "Invalid session" });
+    }
+
+    // Validate the email verification code
+    const validCode = await this.#authService.validateEmailVerificationCode(
+      user,
+      req.body.code,
+    );
+
+    // If the code is invalid, return 401
+    if (!validCode) {
+      return res.status(401).send({ error: "Invalid verification code" });
+    }
+
+    // Update the user verify status
+    await this.#authService.updateUserVerify(user.id);
+
+    // Create a new session with existing user
+    const sessionCookie = this.#authService.createSessionCookie(session.id);
+    return res
+      .status(200)
+      .cookie("session", sessionCookie.value, {
+        htppOnly: true,
+        sameSite: "lax",
+      })
+      .send({ message: "Verify Email Successful" });
   }
 
   async isSignInAvailable(req, res) {
@@ -135,7 +213,14 @@ export default class AuthController {
     const userId = generateIdFromEntropySize(10);
 
     try {
+      // Create a new user
       await this.#authService.createUser(userId, email, passwordHash);
+
+      // generate verification code and send to user email
+      const verificationCode =
+        await this.#authService.generateEmailVerificationCode(userId);
+      await sendEmailVerificationCode(email, verificationCode);
+
       // Create a new session
       // `createSession` will return a session object like { id: "session-id", data: {} }
       const session = await this.#authService.createSession(userId, {});

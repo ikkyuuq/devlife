@@ -1,6 +1,8 @@
 import * as schema from "../models/schema.js";
 import { eq } from "drizzle-orm";
 import { verifyPassword } from "../helpers/auth.helper.js";
+import { generateRandomString, alphabet } from "oslo/crypto";
+import { createDate, isWithinExpirationDate, TimeSpan } from "oslo";
 
 export default class AuthService {
   #db;
@@ -8,6 +10,62 @@ export default class AuthService {
   constructor(db, lucia) {
     this.#db = db;
     this.#lucia = lucia;
+  }
+
+  async validateEmailVerificationCode(user, code) {
+    const emailVerification =
+      await this.#db.query.emailVerificationTable.findFirst({
+        where: eq(schema.emailVerificationTable.userId, user.id),
+      });
+
+    if (!emailVerification || emailVerification.code !== code) {
+      return false;
+    }
+
+    await this.#db
+      .delete(schema.emailVerificationTable)
+      .where(eq(schema.emailVerificationTable.userId, user.id));
+
+    if (!isWithinExpirationDate(emailVerification.expiresAt)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  async updateUserVerify(userId) {
+    await this.#lucia.invalidateUserSessions(userId);
+    await this.#db
+      .update(schema.userTable)
+      .set({ verify: true })
+      .where(eq(schema.userTable.id, userId));
+  }
+
+  async generateEmailVerificationCode(userId) {
+    await this.#db
+      .delete(schema.emailVerificationTable)
+      .where(eq(schema.emailVerificationTable.userId, userId));
+
+    const code = generateRandomString(8, alphabet("0-9"));
+    await this.#db.insert(schema.emailVerificationTable).values({
+      userId,
+      code,
+      expiresAt: createDate(new TimeSpan(15, "m")),
+    });
+    return code;
+  }
+
+  async getUser(userId) {
+    const session = await this.#db.query.sessionTable.findFirst({
+      where: eq(schema.sessionTable.userId, userId),
+    });
+    if (!session) {
+      return null;
+    }
+
+    return await this.#db.query.userTable.findFirst({
+      where: eq(schema.userTable.id, userId),
+    });
   }
 
   async getUserSession(email) {

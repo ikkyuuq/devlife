@@ -2,6 +2,7 @@ import express from "express";
 import { signinRouter } from "./src/routes/signin.js";
 import { signupRouter } from "./src/routes/signup.js";
 import { signoutRouter } from "./src/routes/signout.js";
+import { emailVerificationRouter } from "./src/routes/emailverification.js";
 import swaggerUI from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 
@@ -39,7 +40,7 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
-app.use(signinRouter, signupRouter, signoutRouter);
+app.use(signinRouter, signupRouter, signoutRouter, emailVerificationRouter);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

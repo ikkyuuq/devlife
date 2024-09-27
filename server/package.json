@@ -15,12 +15,15 @@
     "cookie-parser": "^1.4.6",
     "express": "^5.0.0",
     "lucia": "^3.2.0",
+    "mailersend": "^2.3.0",
+    "oslo": "^1.2.1",
     "pg": "^8.13.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
+    "@types/cookie-parser": "^1.4.7",
     "eslint": "^9.11.1",
     "globals": "^15.9.0"
   }
