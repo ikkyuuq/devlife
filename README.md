@@ -6,17 +6,20 @@ CREATE AT: ['2024-09-28' : '02:48']
 
 [X] - Schema Tasks
 
-[ ] - Datbase Table create refs from task schema
+[X] - Datbase Table create refs from task schema
 
 [ ] - Task routes API
 
-[ ] - get:
+[X] - get:
 
-    /tasks (includes information enough for frontend web-based rendering)
+    /task (includes information enough for frontend web-based rendering) ✅
+[X] - put:
+
+    /task (update task) ✅
 
 [ ] - post: 
 
-    /tasks (adding new task)
+    /task (adding new task) ✅
     /task-submit
 
 [ ] - Testing routes
