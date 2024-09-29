@@ -23,6 +23,10 @@ export const Header = () => {
     console.log(values);
   };
 
+  const onVerificationSubmit = (code: string) => {
+    console.log(code);
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 mx-auto w-full max-w-7xl flex justify-between items-center py-4">
       <div>
@@ -48,6 +52,7 @@ export const Header = () => {
           form={form}
           onSignInSubmit={onSignInSubmit}
           onSignUpSubmit={onSignUpSubmit}
+          onVerificationSubmit={onVerificationSubmit}
         />
       </div>
     </nav>
