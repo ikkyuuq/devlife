@@ -55,7 +55,7 @@ signupRouter.get("/signup", async (req, res) =>
  *                 type: string
  *                 example: 12345678
  *     responses:
- *       200:
+ *       302:
  *         description: Successful signup
  *       401:
  *         description: Invalid email or password

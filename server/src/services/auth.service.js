@@ -12,6 +12,34 @@ export default class AuthService {
     this.#lucia = lucia;
   }
 
+  async deleteUnverifiedUser(email) {
+    const user = await this.#db.query.userTable.findFirst({
+      where: eq(schema.userTable.email, email),
+    });
+
+    if (!user || user.verify) {
+      return;
+    }
+
+    await this.#db.transaction(async (trx) => {
+      await Promise.all([
+        trx
+          .delete(schema.emailVerificationTable)
+          .where(eq(schema.emailVerificationTable.userId, user.id)),
+        trx
+          .delete(schema.passwordTable)
+          .where(eq(schema.passwordTable.userId, user.id)),
+        trx
+          .delete(schema.sessionTable)
+          .where(eq(schema.sessionTable.userId, user.id)),
+      ]);
+
+      await trx
+        .delete(schema.userTable)
+        .where(eq(schema.userTable.id, user.id));
+    });
+  }
+
   async validateEmailVerificationCode(user, code) {
     const emailVerification =
       await this.#db.query.emailVerificationTable.findFirst({
