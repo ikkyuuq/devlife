@@ -15,7 +15,7 @@ export default class AuthController {
   async emailVerificationRequest(req, res) {
     // Validate the current session with the session cookie
     const { user } = await this.#authService.validateSession(
-      req.cookies.session,
+      req.cookies.devlife_session,
     );
     console.log(user);
 
@@ -52,11 +52,12 @@ export default class AuthController {
   async emailVerification(req, res) {
     // Validate the current session with the session cookie
     const { session, user } = await this.#authService.validateSession(
-      req.cookies.session,
+      req.cookies.devlife_session,
     );
 
     // If the session or user does not exist, return 401
     if (!session || !user) {
+      console.log("Invalid session");
       return res.status(401).send({ error: "Invalid session" });
     }
 
@@ -68,6 +69,7 @@ export default class AuthController {
 
     // If the code is invalid, return 401
     if (!validCode) {
+      console.log("Invalid verification code");
       return res.status(401).send({ error: "Invalid verification code" });
     }
 
@@ -78,9 +80,11 @@ export default class AuthController {
     const sessionCookie = this.#authService.createSessionCookie(session.id);
     return res
       .status(200)
-      .cookie("session", sessionCookie.value, {
-        htppOnly: true,
+      .cookie("devlife_session", sessionCookie.value, {
+        httpOnly: true,
+        secure: false,
         sameSite: "lax",
+        path: "/",
       })
       .send({ message: "Verify Email Successful" });
   }
@@ -91,7 +95,7 @@ export default class AuthController {
       // if the session is valid, return 400 that means the user is already signed in
       // else return 200 that means the user can proceed with signin
       const { session } = await this.#authService.validateSession(
-        req.cookies.session,
+        req.cookies.devlife_session,
       );
 
       if (session) {
@@ -143,7 +147,7 @@ export default class AuthController {
       );
       return res
         .status(200)
-        .cookie("session", sessionCookie.value, {
+        .cookie("devlife_session", sessionCookie.value, {
           htppOnly: true,
           sameSite: "lax",
         })
@@ -153,24 +157,26 @@ export default class AuthController {
     // If the use already has a session, use the existing session to set to the cookie.
     const sessionCookie = this.#authService.createSessionCookie(session.id);
     return res
-      .status(200)
-      .cookie("session", sessionCookie.value, {
-        htppOnly: true,
+      .status(302)
+      .cookie("devlife_session", sessionCookie.value, {
+        httpOnly: true,
+        secure: false,
         sameSite: "lax",
+        path: "/",
       })
       .send({ message: "Successful signin" });
   }
 
   async signOut(req, res) {
-    if (!req.cookies.session) {
+    if (!req.cookies.devlife_session) {
       return res.status(401).send({ error: "No active session" });
     }
     await this.#authService.deleteSession(req.cookies.session);
     // Clear the session cookie
     return res
       .status(200)
-      .clearCookie("session")
-      .json({ message: "Successful signout" });
+      .clearCookie("devlife_session")
+      .send({ message: "Successful signout" });
   }
 
   async isSignUpAvailable(req, res) {
@@ -179,7 +185,7 @@ export default class AuthController {
       // if the session is valid, return 400 that means the user is already signed in
       // else return 200 that means the user can proceed with signup
       const { session } = await this.#authService.validateSession(
-        req.cookies.session,
+        req.cookies.devlive_session,
       );
 
       if (session) {
@@ -213,13 +219,10 @@ export default class AuthController {
     const userId = generateIdFromEntropySize(10);
 
     try {
+      // Check if the user already exists, and delete the unverified user if exists
+      await this.#authService.deleteUnverifiedUser(email);
       // Create a new user
       await this.#authService.createUser(userId, email, passwordHash);
-
-      // generate verification code and send to user email
-      const verificationCode =
-        await this.#authService.generateEmailVerificationCode(userId);
-      await sendEmailVerificationCode(email, verificationCode);
 
       // Create a new session
       // `createSession` will return a session object like { id: "session-id", data: {} }
@@ -228,14 +231,20 @@ export default class AuthController {
       // `createSessoinCookie` will return a cookie object like { name: "session", value: "session-id; HttpOnly; SameSite=Strict" }
       const sessionCookie = this.#authService.createSessionCookie(session.id);
 
-      // Return a response with the session cookie
+      // generate verification code and send to user email
+      const verificationCode =
+        await this.#authService.generateEmailVerificationCode(userId);
+      await sendEmailVerificationCode(email, verificationCode);
+
       return res
-        .status(200)
-        .cookie("session", sessionCookie.value, {
-          htppOnly: true,
+        .status(302)
+        .cookie("devlife_session", sessionCookie.value, {
+          httpOnly: true,
+          secure: false,
           sameSite: "lax",
+          path: "/",
         })
-        .json({ message: "Successful signup" });
+        .send({ message: "Successful signup" });
     } catch (error) {
       console.error(error);
       // TODO: Improve error handling for each specific case in error instance of error
