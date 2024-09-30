@@ -20,10 +20,11 @@ export const Header = () => {
           },
           credentials: "include",
         });
-        setIsSignedIn(response.status === 400);
+        const data = await response.json();
+        setIsSignedIn(!data.isAvailable);
       } catch (error) {
         console.error("Error checking sign-in status:", error);
-        setIsSignedIn(true);
+        setIsSignedIn(false);
       }
     };
 

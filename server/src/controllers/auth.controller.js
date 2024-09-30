@@ -91,25 +91,41 @@ export default class AuthController {
 
   async isSignInAvailable(req, res) {
     try {
-      // Validate the current session with the session cookie
-      // if the session is valid, return 400 that means the user is already signed in
-      // else return 200 that means the user can proceed with signin
       const { session } = await this.#authService.validateSession(
-        req.cookies.devlife_session,
+        req.cookies.devlife_session
       );
 
-      if (session) {
-        return res.status(400).send({ message: "You are already signed in" });
-      } else {
-        return res
-          .status(200)
-          .send({ message: "No active session. Please proceed with signin." });
-      }
+      return res.status(200).json({
+        isAvailable: !session,
+        message: session
+          ? "You are already signed in"
+          : "No active session. Please proceed with signin.",
+      });
     } catch (error) {
       console.error(error);
-      return res
-        .status(500)
-        .send({ error: "An error occurred during session validation" });
+      return res.status(500).json({
+        error: "An error occurred during session validation",
+      });
+    }
+  }
+
+  async isSignOutAvailable(req, res) {
+    try {
+      const { session } = await this.#authService.validateSession(
+        req.cookies.devlife_session
+      );
+
+      return res.status(200).json({
+        isAvailable: !!session,
+        message: session
+          ? "You can sign out"
+          : "No active session. You are not signed in.",
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        error: "An error occurred during session validation",
+      });
     }
   }
 
@@ -181,25 +197,21 @@ export default class AuthController {
 
   async isSignUpAvailable(req, res) {
     try {
-      // Validate the current session with the session cookie
-      // if the session is valid, return 400 that means the user is already signed in
-      // else return 200 that means the user can proceed with signup
       const { session } = await this.#authService.validateSession(
-        req.cookies.devlive_session,
+        req.cookies.devlife_session
       );
 
-      if (session) {
-        return res.status(400).send({ message: "You are already signed in" });
-      } else {
-        return res
-          .status(200)
-          .send({ message: "No active session. Please proceed with signup." });
-      }
+      return res.status(200).json({
+        isAvailable: !session,
+        message: session
+          ? "You are already signed in"
+          : "No active session. Please proceed with signup.",
+      });
     } catch (error) {
       console.error(error);
-      return res
-        .status(500)
-        .send({ error: "An error occurred during session validation" });
+      return res.status(500).json({
+        error: "An error occurred during session validation",
+      });
     }
   }
 
