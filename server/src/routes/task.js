@@ -14,18 +14,20 @@ const taskController = new TaskController(taskService);
 const authService = new AuthService(db, lucia);
 
 // Middleware to check if the user is authenticated only for the task routes
-const authMiddleware = async (req, res, next) => {
-  const { session, user } = await authService.validateSession(
-    req.cookies.devlife_session,
-  );
-  if (!session || !user) {
-    return res.status(401).send({ error: "Unauthorize" });
+const authenticateApiToken = async (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+  const user = await authService.validateApiToken(token);
+  if (!user) {
+    return res.status(401).json({ error: "Invalid token" });
   }
   req.user = user;
   next();
 };
 
-taskRouter.use(authMiddleware);
+taskRouter.use(authenticateApiToken);
 
 /**
  * @openapi

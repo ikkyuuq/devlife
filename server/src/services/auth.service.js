@@ -12,6 +12,25 @@ export default class AuthService {
     this.#lucia = lucia;
   }
 
+  async validateApiToken(token) {
+    const apiToken = await this.#db.query.tokenTable.findFirst({
+      where: eq(schema.tokenTable.token, token),
+    });
+    if (!apiToken) return null;
+
+    return await this.#db.query.userTable.findFirst({
+      where: eq(schema.userTable.id, apiToken.userId),
+    });
+  }
+  async generateApiToken(userId) {
+    const token = generateRandomString(64, alphabet("a-zA-Z0-9"));
+    await this.#db.insert(schema.tokenTable).values({
+      token,
+      userId,
+    });
+    return token;
+  }
+
   async deleteUnverifiedUser(email) {
     const user = await this.#db.query.userTable.findFirst({
       where: eq(schema.userTable.email, email),
@@ -111,6 +130,7 @@ export default class AuthService {
   }
 
   async validateEmail(email) {
+    console.log(email);
     const user = await this.#db.query.userTable.findFirst({
       where: eq(schema.userTable.email, email),
     });
@@ -128,7 +148,7 @@ export default class AuthService {
     if (!passwordData) {
       return false;
     }
-    const validPassword = verifyPassword(password, passwordData);
+    const validPassword = await verifyPassword(password, passwordData);
 
     if (!validPassword) {
       return false;

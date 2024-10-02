@@ -61,3 +61,36 @@ signinRouter.get("/signin", async (req, res) =>
 signinRouter.post("/signin", async (req, res) =>
   authController.signIn(req, res),
 );
+
+/**
+ * @openapi
+ * /cli-signin:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Signin with cli
+ *     description: Signin with cli
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: example@email.com
+ *               password:
+ *                 type: string
+ *                 example: 12345678
+ *     responses:
+ *       200:
+ *         description: Successful signin
+ *       401:
+ *         description: Invalid email or password
+ */
+signinRouter.post("/cli-signin", async (req, res) => {
+  authController.cliSignIn(req, res);
+});

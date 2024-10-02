@@ -10,6 +10,24 @@ export default class AuthController {
     this.#authService = authService;
   }
 
+  async cliSignIn(req, res) {
+    const { email, password } = req.body;
+    const user = await this.#authService.validateEmail(email);
+    if (!user) {
+      console.log("Invalid email");
+      return res.status(401).send({ error: "Invalid email" });
+    }
+    const isValidPassword = await this.#authService.validatePassword(
+      email,
+      password,
+    );
+    if (!isValidPassword) {
+      return res.status(401).send({ error: "Invalid password" });
+    }
+    const token = await this.#authService.generateApiToken(user.id);
+    return res.status(200).send({ token });
+  }
+
   // This method is used to request an email verification code
   // Using with method POST /email-verification-request
   async emailVerificationRequest(req, res) {
@@ -92,7 +110,7 @@ export default class AuthController {
   async isSignInAvailable(req, res) {
     try {
       const { session } = await this.#authService.validateSession(
-        req.cookies.devlife_session
+        req.cookies.devlife_session,
       );
 
       return res.status(200).json({
@@ -112,7 +130,7 @@ export default class AuthController {
   async isSignOutAvailable(req, res) {
     try {
       const { session } = await this.#authService.validateSession(
-        req.cookies.devlife_session
+        req.cookies.devlife_session,
       );
 
       return res.status(200).json({
@@ -198,7 +216,7 @@ export default class AuthController {
   async isSignUpAvailable(req, res) {
     try {
       const { session } = await this.#authService.validateSession(
-        req.cookies.devlife_session
+        req.cookies.devlife_session,
       );
 
       return res.status(200).json({
