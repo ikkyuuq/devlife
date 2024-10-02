@@ -1,14 +1,31 @@
 import express from "express";
 import { db } from "../configs/db.js";
+import { lucia } from "../configs/auth.js";
 
 import TaskController from "../controllers/task.controller.js";
 import TaskService from "../services/task.service.js";
+import AuthService from "../services/auth.service.js";
 
 export const taskRouter = express.Router();
 taskRouter.use(express.json());
 
 const taskService = new TaskService(db);
 const taskController = new TaskController(taskService);
+const authService = new AuthService(db, lucia);
+
+// Middleware to check if the user is authenticated only for the task routes
+const authMiddleware = async (req, res, next) => {
+  const { session, user } = await authService.validateSession(
+    req.cookies.devlife_session,
+  );
+  if (!session || !user) {
+    return res.status(401).send({ error: "Unauthorize" });
+  }
+  req.user = user;
+  next();
+};
+
+taskRouter.use(authMiddleware);
 
 /**
  * @openapi
