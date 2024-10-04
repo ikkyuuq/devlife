@@ -7,6 +7,21 @@ export default class TaskService {
     this.#db = db;
   }
 
+  async getTask(taskId) {
+    const task = await this.#db.query.taskTable.findFirst({
+      where: eq(schema.taskTable.id, taskId),
+    });
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    const test = await this.#db.query.taskTestTable.findFirst({
+      where: eq(schema.taskTestTable.taskId, taskId),
+    });
+
+    return { ...task, tests: test.tests };
+  }
+
   async updateTask(task) {
     const [taskUpdated] = await this.#db
       .update(schema.taskTable)
@@ -59,19 +74,5 @@ export default class TaskService {
   async getAllTasks() {
     const result = await this.#db.select().from(schema.taskTable);
     return result;
-  }
-
-  async getTask(taskId) {
-    try {
-      const task = await this.#db.query.taskTable.findFirst({
-        where: eq(schema.taskTable.id, taskId),
-      });
-      if (!task) {
-        throw new Error("Task not found");
-      }
-      return task;
-    } catch (error) {
-      throw new Error("Failed to fetch task", { cause: error });
-    }
   }
 }

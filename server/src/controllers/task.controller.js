@@ -26,6 +26,16 @@ export default class TaskController {
     }
   }
 
+  async getTask(req, res) {
+    try {
+      const taskId = await req.params.taskId;
+      const task = await this.#taskService.getTask(taskId);
+      return res.status(200).send({ task });
+    } catch (error) {
+      return res.status(400).send({ error: error.message });
+    }
+  }
+
   async getAllTask(req, res) {
     try {
       const tasks = await this.#taskService.getAllTasks();
@@ -33,9 +43,5 @@ export default class TaskController {
     } catch (error) {
       return res.status(400).send({ error: error.message });
     }
-  }
-
-  async getTask(taskId) {
-    return this.#taskService.getTask(taskId);
   }
 }
