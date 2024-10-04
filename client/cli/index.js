@@ -185,17 +185,13 @@ app
 // Retry logic to handle multiple-line input failure and attempt single-line
 const runTestWithRetry = async (file, input, setTitle) => {
   // First, try with multiple-line input
-  setTitle("Running test...");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 600));
 
   let result = await testRunner(file, input);
 
   if (result.error || result.code !== 0) {
     // Prepare single-line input
     const singleLineInput = input.map(String).join(" ");
-
-    setTitle("Retrying test...");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Retry with single-line input
     result = await testRunner(file, [singleLineInput]);
@@ -249,7 +245,7 @@ const testRunner = async (file, input) => {
 };
 
 const runTask = async (taskid, file) => {
-  const resp = await fetch(`http://localhost:3000/task/${taskid}`, {
+  const resp = await fetch(`http://localhost:3000/cli/task/${taskid}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${devlife.token}`,
@@ -264,18 +260,18 @@ const runTask = async (taskid, file) => {
   const tests_json = JSON.parse(tests);
   const testCount = tests_json.data.length;
 
-  spinner.start();
-  spinner.text = "Running all tests...";
+  logger.info(`Running ${testCount} tests...`);
 
-  const tasks = await Promise.all(
-    tests_json.data.map(async (test, index) => {
-      return tasuku(
-        `Test ${index + 1}`,
-        async ({ setTitle, setError, setOutput, setStatus }) => {
+  let allTestsPassed = true;
+  for (let index = 0; index < tests_json.data.length; index++) {
+    const test = tests_json.data[index];
+    await tasuku(
+      `Test ${index + 1}`,
+      async ({ setTitle, setError, setOutput, setStatus }) => {
+        try {
           const { output, error, timeTaken } = await runTestWithRetry(
             file,
             test.input,
-            setTitle,
           );
           if (error) {
             throw new Error(error);
@@ -283,32 +279,72 @@ const runTask = async (taskid, file) => {
 
           if (test.expected === output) {
             setStatus(`⚡${timeTaken.toFixed(2)} ms`);
-            setTitle(`Test ${index + 1}`);
-            return "Passed";
+            setTitle(`Test ${index + 1} Passed`);
           } else {
+            allTestsPassed = false;
+            setError(`Test ${index + 1} Failed`);
             setStatus(`💥${timeTaken.toFixed(2)} ms`);
-            setError();
             setOutput(
               `${test.input.length > 0 ? `Inputs: ${test.input}\n` : ""}Expected: ${test.expected}\nActual: ${output}`,
             );
-            return "Failed";
           }
-        },
-      );
-    }),
-  );
+        } catch (error) {
+          allTestsPassed = false;
+          setError(`Test ${index + 1} Error`);
+          setOutput(error.message);
+        }
+      },
+    );
+  }
 
-  if (tasks.some((task) => task.result === "Failed")) {
-    spinner.stop("Some tests failed", Spinner.ERROR);
+  if (!allTestsPassed) {
+    logger.error("Some tests failed");
+    await fetch("http://localhost:3000/cli/task", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${devlife.token}`,
+      },
+      body: JSON.stringify({
+        taskId: taskid,
+        status: "failed",
+      }),
+    });
     return;
   }
-  spinner.stop(`All ${testCount} tests passed`, Spinner.SUCCESS);
+
+  logger.info(`All ${testCount} tests passed`);
+  const respSubmitted = await fetch("http://localhost:3000/cli/task", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${devlife.token}`,
+    },
+    body: JSON.stringify({
+      taskId: taskid,
+      status: "done",
+    }),
+  });
+
+  if (respSubmitted.status === 401) {
+    logger.error("Cannot submit task. Please authenticate with `devlife auth`");
+    return;
+  }
+  const dataSubmitted = await respSubmitted.json();
+  logger.info("Task submitted successfully");
+  return dataSubmitted;
 };
+
 app
   .command("submit")
   .arguments("<taskid>")
   .arguments("<solution>")
   .action(async (taskid, solution) => {
+    const isFile = fs.existsSync(solution);
+    if (!isFile) {
+      logger.error("Please provide a valid file path");
+      return;
+    }
     await runTask(taskid, solution);
   });
 
