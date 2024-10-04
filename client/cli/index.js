@@ -259,6 +259,7 @@ const runTask = async (taskid, file) => {
   const tests = data.task.tests;
   const tests_json = JSON.parse(tests);
   const testCount = tests_json.data.length;
+  let testPassed = 0;
 
   logger.info(`Running ${testCount} tests...`);
 
@@ -278,11 +279,12 @@ const runTask = async (taskid, file) => {
           }
 
           if (test.expected === output) {
+            testPassed++;
             setStatus(`⚡${timeTaken.toFixed(2)} ms`);
-            setTitle(`Test ${index + 1} Passed`);
+            setTitle(`Test ${index + 1}`);
           } else {
             allTestsPassed = false;
-            setError(`Test ${index + 1} Failed`);
+            setError(`Test ${index + 1}`);
             setStatus(`💥${timeTaken.toFixed(2)} ms`);
             setOutput(
               `${test.input.length > 0 ? `Inputs: ${test.input}\n` : ""}Expected: ${test.expected}\nActual: ${output}`,
@@ -298,7 +300,8 @@ const runTask = async (taskid, file) => {
   }
 
   if (!allTestsPassed) {
-    logger.error("Some tests failed");
+    logger.error(`Only ${testPassed} tests passed`);
+    logger.error(`Submitted task with failed status`);
     await fetch("http://localhost:3000/cli/task", {
       method: "POST",
       headers: {
