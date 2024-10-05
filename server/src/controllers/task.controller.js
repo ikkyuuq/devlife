@@ -4,6 +4,19 @@ export default class TaskController {
     this.#taskService = taskService;
   }
 
+  async submitTask(req, res) {
+    try {
+      const taskId = await req.body.taskId;
+      const token = await req.headers.authorization?.split(" ")[1];
+      const status = await req.body.status;
+      await this.#taskService.submitTask(taskId, token, status);
+
+      return res.status(200).send({ message: "Task submitted" });
+    } catch (error) {
+      return res.status(400).send({ error: error.message });
+    }
+  }
+
   async createTask(req, res) {
     try {
       const task = await req.body.task;

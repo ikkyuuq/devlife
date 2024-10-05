@@ -4,6 +4,7 @@ import { signupRouter } from "./src/routes/signup.js";
 import { signoutRouter } from "./src/routes/signout.js";
 import { emailVerificationRouter } from "./src/routes/emailverification.js";
 import { taskRouter } from "./src/routes/task.js";
+import { taskCliRouter } from "./src/routes/taskCli.js";
 import swaggerUI from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 
@@ -47,6 +48,7 @@ app.use(
   signoutRouter,
   emailVerificationRouter,
   taskRouter,
+  taskCliRouter,
 );
 
 app.listen(3000, () => {

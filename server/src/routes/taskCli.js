@@ -31,12 +31,12 @@ taskCliRouter.use(authenticateApiToken);
 
 /**
  * @openapi
- * /task/{taskId}:
+ * /cli/task/{taskId}:
  *   get:
  *     description: Get a task by ID
  *     summary: Get a task by ID
  *     tags:
- *       - Tasks
+ *       - CLI Tasks
  *     parameters:
  *       - in: path
  *         name: taskId
@@ -50,6 +50,34 @@ taskCliRouter.use(authenticateApiToken);
  *       400:
  *         description: Bad request
  */
-taskCliRouter.get("/task/:taskId", async (req, res) => {
+taskCliRouter.get("/cli/task/:taskId", async (req, res) => {
   taskController.getTask(req, res);
+});
+
+/** @openapi
+ *  /cli/task:
+ *    post:
+ *      tags:
+ *        - CLI Tasks
+ *      description: Submit a task
+ *      summary: Submit a task
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                taskId:
+ *                  type: string
+ *                status:
+ *                  type: string
+ *      responses:
+ *        200:
+ *          description: Task submitted
+ *        400:
+ *          description: Bad request
+ */
+taskCliRouter.post("/cli/task", async (req, res) => {
+  taskController.submitTask(req, res);
 });

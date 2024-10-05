@@ -1,10 +1,55 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import * as schema from "../models/schema.js";
 
 export default class TaskService {
   #db;
   constructor(db) {
     this.#db = db;
+  }
+
+  async submitTask(taskId, token, status) {
+    const task = await this.#db.query.taskTable.findFirst({
+      where: eq(schema.taskTable.id, taskId),
+    });
+    if (!task) {
+      throw new Error("Task not found");
+    }
+    const user = await this.#db.query.tokenTable.findFirst({
+      where: eq(schema.tokenTable.token, token),
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const submission = await this.#db.query.taskSubmissionTable.findFirst({
+      where: and(
+        eq(schema.taskSubmissionTable.taskId, taskId),
+        eq(schema.taskSubmissionTable.userId, user.userId),
+      ),
+    });
+
+    if (submission) {
+      await this.#db
+        .update(schema.taskSubmissionTable)
+        .set({
+          status: status,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.taskSubmissionTable.taskId, taskId),
+            eq(schema.taskSubmissionTable.userId, user.userId),
+          ),
+        );
+      return;
+    }
+
+    await this.#db.insert(schema.taskSubmissionTable).values({
+      taskId: taskId,
+      userId: user.userId,
+      status: status,
+    });
   }
 
   async getTask(taskId) {
