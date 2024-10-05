@@ -24,6 +24,18 @@ export default class AuthService {
   }
   async generateApiToken(userId) {
     const token = generateRandomString(64, alphabet("a-zA-Z0-9"));
+    const existingToken = await this.#db.query.tokenTable.findFirst({
+      where: eq(schema.tokenTable.userId, userId),
+    });
+
+    if (existingToken) {
+      await this.#db
+        .update(schema.tokenTable)
+        .set({ token })
+        .where(eq(schema.tokenTable.userId, userId));
+      return token;
+    }
+
     await this.#db.insert(schema.tokenTable).values({
       token,
       userId,
