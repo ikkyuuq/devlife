@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import AuthDialog from "@/components/AuthDialog";
 import { AuthFormData, authSchema } from "@/schemas/authSchema";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export const Header = () => {
   const location = useLocation();
@@ -29,7 +30,7 @@ export const Header = () => {
     };
 
     checkSignInStatus();
-  }, []);
+  }, [isSignedIn]);
 
   const form = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
@@ -40,24 +41,48 @@ export const Header = () => {
   });
 
   const onSignInSubmit = async (values: AuthFormData) => {
-    await fetch("http://localhost:3000/signin", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(values),
-      credentials: "include",
-    });
+    try {
+      await fetch("http://localhost:3000/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+        credentials: "include",
+      });
+      setIsSignedIn(true);
+    } catch (error) {
+      console.error("Error signing in:", error);
+    }
   };
   const onSignUpSubmit = async (values: AuthFormData) => {
-    await fetch("http://localhost:3000/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(values),
-      credentials: "include",
-    });
+    try {
+      await fetch("http://localhost:3000/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Error signing up:", error);
+    }
+  };
+
+  const onSignOut = async () => {
+    try {
+      await fetch("http://localhost:3000/signout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      setIsSignedIn(false);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   const onVerificationSubmit = async (code: string) => {
@@ -73,7 +98,7 @@ export const Header = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 mx-auto w-full max-w-7xl flex justify-between items-center py-4">
+    <nav className="z-20 fixed top-0 left-0 right-0 mx-auto w-full max-w-7xl flex justify-between items-center py-4 lg:px-6 px-8">
       <div>
         <h1 className="text-xl text-zinc-50 font-bold">
           <a href={isRoot ? "#devlife" : "/#devlife"}>Devlife</a>
@@ -94,19 +119,21 @@ export const Header = () => {
       </div>
       <div className="flex gap-4">
         {isSignedIn ? (
-          <button
+          <Button
+            variant="secondary"
             onClick={() => {
-              /* Add sign out logic here */
+              onSignOut();
             }}
           >
             Sign Out
-          </button>
+          </Button>
         ) : (
           <AuthDialog
             form={form}
             onSignInSubmit={onSignInSubmit}
             onSignUpSubmit={onSignUpSubmit}
             onVerificationSubmit={onVerificationSubmit}
+            setIsSignedIn={setIsSignedIn}
           />
         )}
       </div>
