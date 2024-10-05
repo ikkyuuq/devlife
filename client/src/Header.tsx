@@ -100,7 +100,7 @@ export const Header = () => {
   return (
     <nav className="z-20 fixed top-0 left-0 right-0 mx-auto w-full max-w-7xl flex justify-between items-center py-4 lg:px-6 px-8">
       <div>
-        <h1 className="text-xl text-zinc-50 font-bold">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-sky-300 text-transparent bg-clip-text">
           <a href={isRoot ? "#devlife" : "/#devlife"}>Devlife</a>
         </h1>
       </div>

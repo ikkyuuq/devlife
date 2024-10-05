@@ -1,6 +1,6 @@
 export const Footer = () => {
   return (
-    <footer className="w-full max-w-7xl flex flex-col items-center text-zinc-500 py-4">
+    <footer className="w-full max-w-7xl flex flex-col items-center text-zinc-500 py-4 lg:px-6 px-8">
       <div className="flex justify-between w-full px-4">
         <div className="flex flex-col">
           <span className="font-bold">Follow Us</span>
@@ -8,8 +8,8 @@ export const Footer = () => {
           <span>Twitter</span>
           <span>Instagram</span>
         </div>
-        <div className="flex flex-col">
-          <span className="font-bold">Contact Us</span>
+        <div className="flex flex-col md:text-start text-end">
+          <span className="font-bold">Contact</span>
           <span>Discord Community</span>
           <span>Email: the.kittipongpras@gmail.com</span>
         </div>
