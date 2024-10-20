@@ -1,17 +1,11 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import { db } from "../configs/db.js";
-import { lucia } from "../configs/auth.js";
-
-import AuthController from "../controllers/auth.controller.js";
-import AuthService from "../services/auth.service.js";
+import { authController } from "../utils/auth.helper.js";
 
 export const signupRouter = express.Router();
+
 signupRouter.use(express.json());
 signupRouter.use(cookieParser());
-
-const authService = new AuthService(db, lucia);
-const authController = new AuthController(authService);
 
 /**
  * @openapi

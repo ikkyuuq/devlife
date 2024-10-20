@@ -1,7 +1,7 @@
 import {
   hashPassword,
   sendEmailVerificationCode,
-} from "../helpers/auth.helper.js";
+} from "../utils/auth.helper.js";
 import { generateIdFromEntropySize } from "lucia";
 
 export default class AuthController {

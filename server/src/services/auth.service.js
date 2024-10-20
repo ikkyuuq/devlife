@@ -1,6 +1,6 @@
-import * as schema from "../models/schema.js";
+import * as schema from "../shared/models/schema.js";
 import { eq } from "drizzle-orm";
-import { verifyPassword } from "../helpers/auth.helper.js";
+import { verifyPassword } from "../utils/auth.helper.js";
 import { generateRandomString, alphabet } from "oslo/crypto";
 import { createDate, isWithinExpirationDate, TimeSpan } from "oslo";
 
@@ -142,7 +142,6 @@ export default class AuthService {
   }
 
   async validateEmail(email) {
-    console.log(email);
     const user = await this.#db.query.userTable.findFirst({
       where: eq(schema.userTable.email, email),
     });

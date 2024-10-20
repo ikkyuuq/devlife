@@ -1,5 +1,5 @@
 import { eq, and } from "drizzle-orm";
-import * as schema from "../models/schema.js";
+import * as schema from "../shared/models/schema.js";
 
 export default class TaskService {
   #db;

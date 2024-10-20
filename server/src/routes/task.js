@@ -1,5 +1,5 @@
 import express from "express";
-import { db } from "../configs/db.js";
+import { db } from "../shared/db.js";
 
 import TaskController from "../controllers/task.controller.js";
 import TaskService from "../services/task.service.js";
