@@ -1,3 +1,3 @@
-import db from "../server/src/shared/db.js";
+const db = require("../server/src/shared/db.js");
 
-export default db;
+module.exports = db;

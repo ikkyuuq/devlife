@@ -1,5 +1,5 @@
 const { app } = require("@azure/functions");
-import { db } from "../../../shared/db.js";
+const db = require("../../../shared/db.js");
 
 app.http("test", {
   methods: ["GET", "POST"],
