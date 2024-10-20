@@ -47,15 +47,38 @@ export default app.http("ValidateEmailVerificationCode", {
         };
       }
 
+      if (result.expiresAt < new Date()) {
+        await db
+          .delete(schema.emailVerificationTable)
+          .where(eq(schema.emailVerificationTable.userId, userId));
+
+        return {
+          status: 400,
+          body: JSON.stringify({
+            verified: false,
+            message: "Verification code has expired.",
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+      }
+
       if (result.code === code) {
         await db.query.emailVerificationTable.findFirst({
           where: eq(schema.emailVerificationTable.userId, userId),
         });
 
         context.log("Deleting email verification code from the database...");
-        await db.delete.emailVerificationTable({
-          where: eq(schema.emailVerificationTable.userId, userId),
-        });
+        await db
+          .delete(schema.emailVerificationTable)
+          .where(eq(schema.emailVerificationTable.userId, userId));
+
+        context.log("Updating user table to set email as verified...");
+        await db
+          .update(schema.userTable)
+          .set({ verify: true })
+          .where(eq(schema.userTable.id, userId));
 
         context.log(`Email verified for user ID: ${userId}`);
         return {

@@ -3,6 +3,7 @@ import {
   sendEmailVerificationCode,
 } from "../utils/auth.helper.js";
 import { generateIdFromEntropySize } from "lucia";
+import { env } from "node:process";
 
 export default class AuthController {
   #authService;
@@ -75,27 +76,35 @@ export default class AuthController {
 
     // If the session or user does not exist, return 401
     if (!session || !user) {
-      console.log("Invalid session");
       return res.status(401).send({ error: "Invalid session" });
     }
 
-    // Validate the email verification code
-    const validCode = await this.#authService.validateEmailVerificationCode(
-      user,
-      req.body.code,
+    // Validate the email verification code and update verified status in Database with the user id and code
+    // Using with Azure Function ValidateEmailVerificationCode
+    const resp = await fetch(
+      `${env.AZURE_FUNCTIONS_URL}ValidateEmailVerificationCode`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: req.body.userId,
+          code: req.body.code,
+        }),
+      },
     );
 
-    // If the code is invalid, return 401
-    if (!validCode) {
-      console.log("Invalid verification code");
-      return res.status(401).send({ error: "Invalid verification code" });
-    }
+    const data = await resp.json();
 
-    // Update the user verify status
-    await this.#authService.updateUserVerify(user.id);
+    // If the response status is not 200, return the error message
+    if (resp.status !== 200) {
+      return res.status(resp.status).send({ error: data.message });
+    }
 
     // Create a new session with existing user
     const sessionCookie = this.#authService.createSessionCookie(session.id);
+
     return res
       .status(200)
       .cookie("devlife_session", sessionCookie.value, {
@@ -104,7 +113,7 @@ export default class AuthController {
         sameSite: "lax",
         path: "/",
       })
-      .send({ message: "Verify Email Successful" });
+      .send({ message: data.message });
   }
 
   async isSignInAvailable(req, res) {
@@ -182,8 +191,10 @@ export default class AuthController {
       return res
         .status(200)
         .cookie("devlife_session", sessionCookie.value, {
-          htppOnly: true,
+          httpOnly: true,
+          secure: false,
           sameSite: "lax",
+          path: "/",
         })
         .send({ message: "Successful signin" });
     }

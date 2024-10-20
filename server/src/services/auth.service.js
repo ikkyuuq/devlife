@@ -2,7 +2,7 @@ import * as schema from "../shared/models/schema.js";
 import { eq } from "drizzle-orm";
 import { verifyPassword } from "../utils/auth.helper.js";
 import { generateRandomString, alphabet } from "oslo/crypto";
-import { createDate, isWithinExpirationDate, TimeSpan } from "oslo";
+import { createDate, TimeSpan } from "oslo";
 
 export default class AuthService {
   #db;
@@ -69,35 +69,6 @@ export default class AuthService {
         .delete(schema.userTable)
         .where(eq(schema.userTable.id, user.id));
     });
-  }
-
-  async validateEmailVerificationCode(user, code) {
-    const emailVerification =
-      await this.#db.query.emailVerificationTable.findFirst({
-        where: eq(schema.emailVerificationTable.userId, user.id),
-      });
-
-    if (!emailVerification || emailVerification.code !== code) {
-      return false;
-    }
-
-    await this.#db
-      .delete(schema.emailVerificationTable)
-      .where(eq(schema.emailVerificationTable.userId, user.id));
-
-    if (!isWithinExpirationDate(emailVerification.expiresAt)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  async updateUserVerify(userId) {
-    await this.#lucia.invalidateUserSessions(userId);
-    await this.#db
-      .update(schema.userTable)
-      .set({ verify: true })
-      .where(eq(schema.userTable.id, userId));
   }
 
   async generateEmailVerificationCode(userId) {
