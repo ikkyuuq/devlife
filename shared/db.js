@@ -8,3 +8,6 @@ const pool = new pg.Pool({
 });
 
 export const db = drizzle(pool, { schema });
+import pool from '../../../shared/db.js';
+
+export default pool;
