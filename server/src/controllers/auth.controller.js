@@ -275,7 +275,18 @@ export default class AuthController {
       // generate verification code and send to user email
       const verificationCode =
         await this.#authService.generateEmailVerificationCode(userId);
-      await sendEmailVerificationCode(email, verificationCode);
+
+      // await sendEmailVerificationCode(email, verificationCode);
+      fetch(`${env.AZURE_FUNCTIONS_URL}SendEmailVerificationCode`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          code: verificationCode,
+        }),
+      });
 
       return res
         .status(302)
