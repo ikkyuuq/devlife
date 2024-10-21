@@ -1,7 +1,4 @@
-import {
-  hashPassword,
-  sendEmailVerificationCode,
-} from "../utils/auth.helper.js";
+import { hashPassword } from "../utils/auth.helper.js";
 import { generateIdFromEntropySize } from "lucia";
 import { env } from "node:process";
 
@@ -55,16 +52,29 @@ export default class AuthController {
     console.log(verificationCode);
 
     // Send the email verification code to the user email
-    const mailsender = await sendEmailVerificationCode(
-      userData.email,
-      verificationCode,
+    const respMailSender = await fetch(
+      `${env.AZURE_FUNCTIONS_URL}sendemailverificationcode`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          code: verificationCode,
+        }),
+      },
     );
 
-    if (!mailsender) {
-      return res.status(500).send({ error: "Email not sent" });
+    if (!respMailSender.ok) {
+      return res
+        .status(respMailSender.status)
+        .send({ error: respMailSender.message });
     }
 
-    return res.status(200).send({ message: "Email verification code sent" });
+    return res
+      .status(respMailSender.status)
+      .send({ message: respMailSender.message });
   }
 
   // This method is used to verify the email with the code
@@ -276,7 +286,6 @@ export default class AuthController {
       const verificationCode =
         await this.#authService.generateEmailVerificationCode(userId);
 
-      // await sendEmailVerificationCode(email, verificationCode);
       fetch(`${env.AZURE_FUNCTIONS_URL}SendEmailVerificationCode`, {
         method: "POST",
         headers: {
