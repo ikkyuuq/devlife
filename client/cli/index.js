@@ -85,6 +85,7 @@ app
             password: password,
           }),
         });
+
         return resp;
       }
 
@@ -92,7 +93,7 @@ app
       spinner.text = "Signing in...";
 
       const resp = await emailAuth();
-      if (resp.status === 401) {
+      if (!resp.ok) {
         resp.json().then((data) => {
           spinner.stop(`${data.error}`, Spinner.ERROR);
         });
@@ -109,7 +110,7 @@ app
       // Write the token to the config file
       fs.writeFileSync(configPath, JSON.stringify(data, null, 2));
 
-      spinner.stop("Singned in to devlife", Spinner.SUCCESS);
+      spinner.stop("Signed in to devlife", Spinner.SUCCESS);
     } else if (options.oauth) {
       const email = options.oauth;
       async function githubAuth() {
