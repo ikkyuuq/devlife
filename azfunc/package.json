@@ -10,12 +10,15 @@
   },
   "dependencies": {
     "@azure/functions": "^4.0.0",
-    "dotenv": "^16.4.5",
+    "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.35.2",
     "mailersend": "^2.3.0",
+    "oslo": "^1.2.1",
     "pg": "^8.13.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/pg": "^8.11.10",
     "azure-functions-core-tools": "^4.x"
   }
 }
