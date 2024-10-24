@@ -1,8 +1,6 @@
 import { app } from "@azure/functions";
 import { Recipient, EmailParams, MailerSend } from "mailersend";
-import dotenv from "dotenv";
-
-dotenv.config();
+import { env } from "node:process";
 
 app.http("SendEmailVerificationCode", {
   methods: ["POST"],
@@ -24,14 +22,14 @@ app.http("SendEmailVerificationCode", {
     }
 
     const mailersend = new MailerSend({
-      apiKey: process.env.MAILERSEND_KEY_PROD,
+      apiKey: env.MAILERSEND_KEY_PROD,
     });
 
     const recipient = [new Recipient(email, "Recipient")];
 
     const emailParams = new EmailParams()
       .setFrom({
-        email: process.env.MAILERSEND_EMAIL_PROD,
+        email: env.MAILERSEND_EMAIL_PROD,
         name: "devlife",
       })
       .setTo(recipient)

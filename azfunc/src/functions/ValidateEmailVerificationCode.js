@@ -2,9 +2,6 @@ import { app } from "@azure/functions";
 import db from "../shared/db.js";
 import { eq } from "drizzle-orm";
 import * as schema from "../shared/schema.js";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 export default app.http("ValidateEmailVerificationCode", {
   methods: ["POST"],
