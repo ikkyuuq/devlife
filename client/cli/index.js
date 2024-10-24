@@ -74,17 +74,19 @@ app
       ]);
 
       async function emailAuth() {
-        const resp = await fetch("http://localhost:3000/cli-signin", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${devlife.token ?? ""}`,
+        const resp = await fetch(
+          `https://apis.prasompongapi.app/api/CLISignin`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email,
+              password,
+            }),
           },
-          body: JSON.stringify({
-            email: email,
-            password: password,
-          }),
-        });
+        );
 
         return resp;
       }
@@ -93,14 +95,13 @@ app
       spinner.text = "Signing in...";
 
       const resp = await emailAuth();
+      const data = await resp.json();
+
       if (!resp.ok) {
-        resp.json().then((data) => {
-          spinner.stop(`${data.error}`, Spinner.ERROR);
-        });
+        spinner.stop(`${data.error}`, Spinner.ERROR);
         return;
       }
 
-      const data = await resp.json();
       const homeDir = process.env.HOME || process.env.USERPROFILE;
       const devlifeDir = `${homeDir}/.devlife`;
       const configPath = `${devlifeDir}/config.json`;
