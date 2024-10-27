@@ -106,10 +106,13 @@ app
       const devlifeDir = `${homeDir}/.devlife`;
       const configPath = `${devlifeDir}/config.json`;
 
-      // Create the directory if it doesn't exist
       fs.mkdirSync(devlifeDir, { recursive: true });
-      // Write the token to the config file
-      fs.writeFileSync(configPath, JSON.stringify(data, null, 2));
+      const configData = {
+        ...data,
+        DEVLIFE_AZFUNC_URL: "https://apis.prasompongapi.app/api/",
+      };
+
+      fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
 
       spinner.stop("Signed in to devlife", Spinner.SUCCESS);
     } else if (options.oauth) {
@@ -148,8 +151,11 @@ app
   .command("list")
   .alias("ls")
   .description("List tasks from devlife")
-  // TODO: implement fetch tasks by status (todo, done)
-  .option("-f, --filter <filter>", "Filter tasks by status (done, todo)")
+  // TODO: implement fetch tasks by status (todo, passed, failed)
+  .option(
+    "-f, --filter <filter>",
+    "Filter tasks by status (passed, failed, todo)",
+  )
   .option("-t, --tags <tags...>", "Filter items by type")
   .action(async (options) => {
     const resp = await listAllTasks();
@@ -249,16 +255,25 @@ const testRunner = async (file, input) => {
 };
 
 const runTask = async (taskid, file) => {
-  const resp = await fetch(`http://localhost:3000/cli/task/${taskid}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${devlife.token}`,
-    },
-  });
-  if (resp.status === 401) {
+  if (!devlife.DEVLIFE_AZFUNC_URL) {
     logger.error("Please authenticate with `devlife auth`");
     return;
   }
+  const resp = await fetch(
+    `${devlife.DEVLIFE_AZFUNC_URL}gettask?id=${taskid}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${devlife.token}`,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+  if (!resp.ok) {
+    logger.error(resp.error);
+    return;
+  }
+
   const data = await resp.json();
   const tests = data.task.tests;
   const tests_json = JSON.parse(tests);
@@ -306,7 +321,7 @@ const runTask = async (taskid, file) => {
   if (!allTestsPassed) {
     logger.error(`Only ${testPassed} tests passed`);
     logger.error(`Submitted task with failed status`);
-    await fetch("http://localhost:3000/cli/task", {
+    await fetch(`${devlife.DEVLIFE_AZFUNC_URL}clitasksubmit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -321,17 +336,20 @@ const runTask = async (taskid, file) => {
   }
 
   logger.info(`All ${testCount} tests passed`);
-  const respSubmitted = await fetch("http://localhost:3000/cli/task", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${devlife.token}`,
+  const respSubmitted = await fetch(
+    `${devlife.DEVLIFE_AZFUNC_URL}clitasksubmit`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${devlife.token}`,
+      },
+      body: JSON.stringify({
+        taskId: taskid,
+        status: "passed",
+      }),
     },
-    body: JSON.stringify({
-      taskId: taskid,
-      status: "done",
-    }),
-  });
+  );
 
   if (respSubmitted.status === 401) {
     logger.error("Cannot submit task. Please authenticate with `devlife auth`");
