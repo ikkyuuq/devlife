@@ -1,4 +1,3 @@
-import { hashPassword } from "../utils/auth.helper.js";
 import { generateIdFromEntropySize } from "lucia";
 import { env } from "node:process";
 
@@ -8,32 +7,11 @@ export default class AuthController {
     this.#authService = authService;
   }
 
-  async cliSignIn(req, res) {
-    const { email, password } = req.body;
-    const user = await this.#authService.validateEmail(email);
-    if (!user) {
-      console.log("Invalid email");
-      return res.status(401).send({ error: "Invalid email" });
-    }
-    const isValidPassword = await this.#authService.validatePassword(
-      email,
-      password,
-    );
-    if (!isValidPassword) {
-      return res.status(401).send({ error: "Invalid password" });
-    }
-    const token = await this.#authService.generateApiToken(user.id);
-    return res.status(200).send({ token });
-  }
-
-  // This method is used to request an email verification code
-  // Using with method POST /email-verification-request
   async emailVerificationRequest(req, res) {
     // Validate the current session with the session cookie
     const { user } = await this.#authService.validateSession(
       req.cookies.devlife_session,
     );
-    console.log(user);
 
     // If the user does not exist, return 401
     if (!user) {
@@ -44,12 +22,22 @@ export default class AuthController {
     if (!userData) {
       return res.status(401).send({ error: "User not found" });
     }
-    console.log(userData.email);
 
     // Generate a new email verification code
-    const verificationCode =
-      await this.#authService.generateEmailVerificationCode(user.id);
-    console.log(verificationCode);
+    const verificationCode = await fetch(
+      `${env.AZURE_FUNCTIONS_URL}generateverificationcode`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+        }),
+      },
+    );
+
+    const dataCode = await verificationCode.json();
 
     // Send the email verification code to the user email
     const respMailSender = await fetch(
@@ -61,23 +49,23 @@ export default class AuthController {
         },
         body: JSON.stringify({
           email: userData.email,
-          code: verificationCode,
+          code: dataCode.code,
         }),
       },
     );
 
-    if (!respMailSender.ok) {
+    const dataMail = await respMailSender.json();
+
+    if (!dataMail.status) {
       return res
         .status(respMailSender.status)
-        .send({ error: respMailSender.message });
+        .send({ error: dataMail.message });
     }
-
     return res
       .status(respMailSender.status)
-      .send({ message: respMailSender.message });
+      .send({ message: dataMail.message });
   }
 
-  // This method is used to verify the email with the code
   async emailVerification(req, res) {
     // Validate the current session with the session cookie
     const { session, user } = await this.#authService.validateSession(
@@ -92,7 +80,7 @@ export default class AuthController {
     // Validate the email verification code and update verified status in Database with the user id and code
     // Using with Azure Function ValidateEmailVerificationCode
     const resp = await fetch(
-      `${env.AZURE_FUNCTIONS_URL}ValidateEmailVerificationCode`,
+      `${env.AZURE_FUNCTIONS_URL}validateemailverificationcode`,
       {
         method: "POST",
         headers: {
@@ -108,7 +96,7 @@ export default class AuthController {
     const data = await resp.json();
 
     // If the response status is not 200, return the error message
-    if (resp.status !== 200) {
+    if (!resp.ok) {
       return res.status(resp.status).send({ error: data.message });
     }
 
@@ -116,7 +104,7 @@ export default class AuthController {
     const sessionCookie = this.#authService.createSessionCookie(session.id);
 
     return res
-      .status(200)
+      .status(resp.status)
       .cookie("devlife_session", sessionCookie.value, {
         httpOnly: true,
         secure: false,
@@ -157,6 +145,26 @@ export default class AuthController {
         message: session
           ? "You can sign out"
           : "No active session. You are not signed in.",
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        error: "An error occurred during session validation",
+      });
+    }
+  }
+
+  async isSignUpAvailable(req, res) {
+    try {
+      const { session } = await this.#authService.validateSession(
+        req.cookies.devlife_session,
+      );
+
+      return res.status(200).json({
+        isAvailable: !session,
+        message: session
+          ? "You are already signed in"
+          : "No active session. Please proceed with signup.",
       });
     } catch (error) {
       console.error(error);
@@ -234,26 +242,6 @@ export default class AuthController {
       .send({ message: "Successful signout" });
   }
 
-  async isSignUpAvailable(req, res) {
-    try {
-      const { session } = await this.#authService.validateSession(
-        req.cookies.devlife_session,
-      );
-
-      return res.status(200).json({
-        isAvailable: !session,
-        message: session
-          ? "You are already signed in"
-          : "No active session. Please proceed with signup.",
-      });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({
-        error: "An error occurred during session validation",
-      });
-    }
-  }
-
   async signUp(req, res) {
     // Get email and password from the request body
     const email = req.body.email;
@@ -263,17 +251,38 @@ export default class AuthController {
     if (!email || !password)
       return res.status(401).send("Invalid email or password");
 
-    // Hashing the password incomming from the request
-    const passwordHash = await hashPassword(password);
-
     // Generating new userId
     const userId = generateIdFromEntropySize(10);
 
     try {
       // Check if the user already exists, and delete the unverified user if exists
-      await this.#authService.deleteUnverifiedUser(email);
+
+      const existingUser = await this.#authService.validateEmail(email);
+
+      if (existingUser) {
+        await fetch(`${env.AZURE_FUNCTIONS_URL}DeleteUnverifiedUser`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+          }),
+        });
+      }
+
       // Create a new user
-      await this.#authService.createUser(userId, email, passwordHash);
+      await fetch(`${env.AZURE_FUNCTIONS_URL}CreateUser`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: userId,
+          email,
+          password,
+        }),
+      });
 
       // Create a new session
       // `createSession` will return a session object like { id: "session-id", data: {} }
@@ -283,17 +292,33 @@ export default class AuthController {
       const sessionCookie = this.#authService.createSessionCookie(session.id);
 
       // generate verification code and send to user email
-      const verificationCode =
-        await this.#authService.generateEmailVerificationCode(userId);
+      const respCode = await fetch(
+        `${env.AZURE_FUNCTIONS_URL}GenerateVerificationCode`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+          }),
+        },
+      );
 
-      fetch(`${env.AZURE_FUNCTIONS_URL}SendEmailVerificationCode`, {
+      const dataCode = await respCode.json();
+
+      if (!respCode.ok) {
+        return res.status(respCode.status).send({ error: dataCode.error });
+      }
+
+      await fetch(`${env.AZURE_FUNCTIONS_URL}SendEmailVerificationCode`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email,
-          code: verificationCode,
+          code: dataCode.code,
         }),
       });
 
@@ -307,9 +332,7 @@ export default class AuthController {
         })
         .send({ message: "Successful signup" });
     } catch (error) {
-      console.error(error);
-      // TODO: Improve error handling for each specific case in error instance of error
-      // ECONNREFUSED - database connection error
+      console.log(error);
       return res.status(500).json({ error: "An error occurred during signup" });
     }
   }
