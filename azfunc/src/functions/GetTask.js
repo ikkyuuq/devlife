@@ -8,17 +8,6 @@ app.http("GetTask", {
   authLevel: "anonymous",
   handler: async (request, context) => {
     context.log("Getting task");
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader) {
-      context.warn("No authorization header present");
-      return {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ error: "Authorization header required" }),
-      };
-    }
     const taskId = request.query.get("id");
 
     context.log("Task ID:", taskId);
