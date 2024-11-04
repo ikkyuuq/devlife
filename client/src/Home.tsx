@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Code, Terminal, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import bgDevlifeDesktop from "./assets/bg-devlife-desktop.mp4";
