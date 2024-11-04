@@ -7,8 +7,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import * as React from "react";
-
 import {
   ChartConfig,
   ChartContainer,
@@ -51,10 +49,6 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function TaskChart() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.tasks, 0);
-  }, []);
-
   return (
     <Card className="flex flex-col border-none bg-transparent w-full">
       <CardContent className="flex flex-col items-center pb-0">
@@ -87,13 +81,6 @@ export function TaskChart() {
                           textAnchor="middle"
                           dominantBaseline="middle"
                         >
-                          <tspan
-                            x={viewBox.cx}
-                            y={viewBox.cy}
-                            className="fill-zinc-50 text-2xl font-bold"
-                          >
-                            {totalVisitors.toLocaleString()}
-                          </tspan>
                           <tspan
                             x={viewBox.cx}
                             y={(viewBox.cy || 0) + 20}
@@ -131,7 +118,7 @@ export function TaskChart() {
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import { Input } from "./components/ui/input";
 import { MultiSelect } from "./components/ui/multi-select";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const chartTechData = [
   { tech: "Python", available: 306 },
@@ -191,44 +178,37 @@ export function TechChart() {
   );
 }
 
-export const Explore = () => {
-  const [selectedStatus, setSelectedStatus] = React.useState<string[]>([]);
-  const [selectedLevel, setSelectedLevel] = React.useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
-  const [searchContext, setSearchContext] = React.useState<string>("");
+interface Task {
+  id: string;
+  title: string;
+  status: string;
+  tags: string[];
+}
 
-  const tasks = [
-    {
-      status: "Done",
-      title: "Hello World Python",
-      tags: ["Python", "Programming"],
-      level: "Newbie",
-    },
-    {
-      status: "In Progress",
-      title: "Build a REST API",
-      tags: ["JavaScript", "Node.js", "Express"],
-      level: "Intermediate",
-    },
-    {
-      status: "Todo",
-      title: "Implement Machine Learning Model",
-      tags: ["Python", "TensorFlow", "AI"],
-      level: "Advanced",
-    },
-    {
-      status: "Done",
-      title: "Create a React Component",
-      tags: ["JavaScript", "React", "Frontend"],
-      level: "Intermediate",
-    },
-    {
-      status: "In Progress",
-      title: "Database Design for E-commerce",
-      tags: ["SQL", "Database", "Design"],
-      level: "Advanced",
-    },
-  ];
+export const Explore = () => {
+  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [searchContext, setSearchContext] = useState<string>("");
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const userResp = await fetch("http://localhost:3000/user", {
+        credentials: "include",
+      });
+      const userData = await userResp.json();
+      if (!userData.user.id) {
+        return;
+      }
+      const tasksResp = await fetch(
+        `http://localhost:3000/task/status/${userData.user.id}`,
+      );
+      const tasksData = await tasksResp.json();
+      setTasks(tasksData.tasksWithStatus);
+    };
+
+    fetchTasks();
+  }, []);
 
   const statusOptions = [
     { value: "done", label: "Done" },
@@ -236,12 +216,6 @@ export const Explore = () => {
     { value: "todo", label: "Todo" },
     { value: "official", label: "Official" },
     { value: "community", label: "Community" },
-  ];
-
-  const levelOptions = [
-    { value: "newbie", label: "Newbie" },
-    { value: "intermediate", label: "Intermediate" },
-    { value: "advance", label: "Advance" },
   ];
 
   const tagOptions = [
@@ -263,9 +237,6 @@ export const Explore = () => {
       const statusMatch =
         selectedStatus.length === 0 ||
         selectedStatus.includes(task.status.toLowerCase().replace(" ", ""));
-      const levelMatch =
-        selectedLevel.length === 0 ||
-        selectedLevel.includes(task.level.toLowerCase());
       const tagMatch =
         selectedTags.length === 0 ||
         task.tags.some((tag) => selectedTags.includes(tag));
@@ -273,11 +244,11 @@ export const Explore = () => {
         .toLowerCase()
         .includes(searchContext.toLowerCase());
 
-      return statusMatch && levelMatch && tagMatch && titleMatch;
+      return statusMatch && tagMatch && titleMatch;
     });
 
     console.log(filteredTasks);
-  }, [selectedStatus, selectedLevel, selectedTags, searchContext, tasks]);
+  }, [selectedStatus, selectedTags, searchContext, tasks]);
 
   return (
     <div className="min-h-screen h-full">
@@ -296,15 +267,6 @@ export const Explore = () => {
                 onValueChange={setSelectedStatus}
                 defaultValue={selectedStatus}
                 placeholder="Status"
-                variant="inverted"
-                animation={2}
-                maxCount={1}
-              />
-              <MultiSelect
-                options={levelOptions}
-                onValueChange={setSelectedLevel}
-                defaultValue={selectedLevel}
-                placeholder="Level"
                 variant="inverted"
                 animation={2}
                 maxCount={1}
@@ -335,14 +297,15 @@ export const Explore = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-zinc-50 uppercase tracking-wider">
                     Tags
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-50 uppercase tracking-wider">
-                    Level
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-zinc-600 divide-y divide-zinc-200">
                 {tasks.map((task) => (
-                  <tr>
+                  <tr
+                    key={task.id}
+                    className="cursor-pointer hover:bg-zinc-500 transition-colors"
+                    onClick={() => (window.location.href = `/task/${task.id}`)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                         {task.status}
@@ -352,14 +315,14 @@ export const Explore = () => {
                       {task.title}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {task.tags.map((tag) => (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 mr-2">
+                      {task.tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 mr-2"
+                        >
                           {tag}
                         </span>
                       ))}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
-                      {task.level}
                     </td>
                   </tr>
                 ))}

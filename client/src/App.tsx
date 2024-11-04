@@ -3,6 +3,7 @@ import { Layout } from "./Layout";
 import { Home } from "./Home";
 import { Explore } from "./Explore";
 import { Roadmap } from "./Roadmap";
+import { Task } from "./Task";
 
 function App() {
   return (
@@ -12,6 +13,8 @@ function App() {
           <Route index element={<Home />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/roadmaps" element={<Roadmap />} />
+          <Route path="/task/:id" element={<Task />} />
+          <Route path="*" element={<div>404 Not Found</div>} />
         </Route>
       </Routes>
     </BrowserRouter>
