@@ -1,7 +1,57 @@
+import { env } from "node:process";
+
 export default class TaskController {
   #taskService;
   constructor(taskService) {
     this.#taskService = taskService;
+  }
+
+  async getTasksWithStatus(req, res) {
+    try {
+      const userId = req.params.userId;
+      const tasks = await this.#taskService.getAllTasks();
+      const taskSubmissions =
+        await this.#taskService.getTaskSubmissionsByUserId(userId);
+
+      const taskStatusMap = new Map(
+        taskSubmissions.map((submission) => [
+          submission.task_id,
+          submission.status,
+        ]),
+      );
+
+      const tasksWithStatus = tasks.map((task) => ({
+        ...task,
+        status: taskStatusMap.get(task.status) || "not done",
+      }));
+
+      return res.status(200).send({ tasksWithStatus });
+    } catch (error) {
+      console.error("Error in getTasksWithStatus:", error);
+      return res.status(400).send({ error: error.message });
+    }
+  }
+
+  async getTask(req, res) {
+    try {
+      const taskId = await req.params.id;
+      if (!taskId) {
+        return res.status(400).send({ error: "Task ID is required" });
+      }
+      const task = await fetch(
+        `${env.AZURE_FUNCTIONS_URL}gettask?id=${taskId}`,
+      );
+
+      if (!task.ok) {
+        return res.status(task.status).send({ error: task.error });
+      }
+
+      const data = await task.json();
+      console.log(data);
+      return res.status(200).send(data);
+    } catch (error) {
+      return res.status(400).send({ error: error.message });
+    }
   }
 
   async createTask(req, res) {
