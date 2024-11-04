@@ -7,6 +7,14 @@ export default class TaskService {
     this.#db = db;
   }
 
+  async getTaskSubmissionsByUserId(userId) {
+    const submissions = await this.#db.query.taskSubmissionTable.findMany({
+      where: eq(schema.taskSubmissionTable.userId, userId),
+    });
+
+    return submissions;
+  }
+
   async updateTask(task) {
     const [taskUpdated] = await this.#db
       .update(schema.taskTable)

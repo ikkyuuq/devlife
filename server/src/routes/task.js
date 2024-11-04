@@ -30,6 +30,57 @@ taskRouter.get("/task", async (req, res) =>
 
 /**
  * @openapi
+ * /task/status/{userId}:
+ *   get:
+ *     description: Get tasks with their status for a specific user
+ *     summary: Get tasks with status by user ID
+ *     tags:
+ *       - Tasks
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         description: User ID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A list of tasks with their status
+ *       400:
+ *         description: Bad request
+ */
+taskRouter.get("/task/status/:userId", async (req, res) =>
+  taskController.getTasksWithStatus(req, res),
+);
+
+/**
+ * @openapi
+ * /task/{id}:
+ *   get:
+ *     description: Get task by id
+ *     summary: Get task by id
+ *     tags:
+ *       - Tasks
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Task id
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A single task
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: Task not found
+ */
+taskRouter.get("/task/:id", async (req, res) =>
+  taskController.getTask(req, res),
+);
+/**
+ * @openapi
  * /task:
  *   post:
  *     tags:
