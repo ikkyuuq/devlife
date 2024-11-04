@@ -264,17 +264,21 @@ const runTask = async (taskid, file) => {
     {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${devlife.token}`,
         "Content-Type": "application/json",
       },
     },
   );
   if (!resp.ok) {
-    logger.error(resp.error);
+    const errorData = await resp.json();
+    logger.error(errorData.error || "Failed to fetch task");
     return;
   }
 
   const data = await resp.json();
+  if (!data.task) {
+    logger.error(data.error || "Task not found");
+    return;
+  }
   const tests = data.task.tests;
   const tests_json = JSON.parse(tests);
   const testCount = tests_json.data.length;
