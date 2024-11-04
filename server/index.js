@@ -4,9 +4,10 @@ import { signupRouter } from "./src/routes/signup.js";
 import { signoutRouter } from "./src/routes/signout.js";
 import { emailVerificationRouter } from "./src/routes/emailverification.js";
 import { taskRouter } from "./src/routes/task.js";
-import { taskCliRouter } from "./src/routes/taskCli.js";
+import { userRouter } from "./src/routes/user.js";
 import swaggerUI from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
+import cors from "cors";
 
 /**
  * @type {import('swagger-jsdoc').Options}
@@ -32,6 +33,7 @@ const openapiSpecification = swaggerJsdoc(options);
 
 const app = express();
 
+app.use(cors());
 app.use("/swagger", swaggerUI.serve, swaggerUI.setup(openapiSpecification));
 app.get("/swagger.json", (_, res) => {
   res.setHeader("Content-Type", "application/json");
@@ -48,7 +50,7 @@ app.use(
   signoutRouter,
   emailVerificationRouter,
   taskRouter,
-  taskCliRouter,
+  userRouter,
 );
 
 app.listen(3000, () => {
