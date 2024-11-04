@@ -17,7 +17,7 @@ interface TaskData {
     content: string;
     createdAt: string;
     updatedAt: string;
-    test: string;
+    tests: string;
   };
 }
 
@@ -87,7 +87,7 @@ export const Task = () => {
     return <div>No task found</div>;
   }
 
-  const testCases = JSON.parse(data.task.test).data;
+  const testCases = JSON.parse(data.task.tests).data;
 
   return (
     <div className="mt-28 w-full max-w-7xl mx-auto lg:px-6 px-8">
