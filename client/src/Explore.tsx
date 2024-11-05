@@ -14,29 +14,9 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const chartData = [
-  { status: "done", tasks: 275, fill: "hsl(var(--done))" },
-  { status: "inProgress", tasks: 200, fill: "hsl(var(--in-progress))" },
-  { status: "todo", tasks: 287, fill: "hsl(var(--todo))" },
-  { status: "official", tasks: 173, fill: "hsl(var(--official))" },
-  { status: "community", tasks: 190, fill: "hsl(var(--community))" },
-];
-
 const chartConfig = {
   tasks: {
     label: "Tasks",
-  },
-  done: {
-    label: "Done",
-    color: "hsl(var(--done))",
-  },
-  inProgress: {
-    label: "In Progress",
-    color: "hsl(var(--in-progress)",
-  },
-  todo: {
-    label: "Todo",
-    color: "hsl(var(--todo))",
   },
   official: {
     label: "Official",
@@ -48,7 +28,15 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function TaskChart() {
+interface ITaskChartProps {
+  data: { status: string; tasks: number; fill: string }[];
+}
+
+interface ITechChartProps {
+  data: { tech: string; available: number }[];
+}
+
+export function TaskChart({ data }: ITaskChartProps) {
   return (
     <Card className="flex flex-col border-none bg-transparent w-full">
       <CardContent className="flex flex-col items-center pb-0">
@@ -63,7 +51,7 @@ export function TaskChart() {
                 content={<ChartTooltipContent hideLabel />}
               />
               <Pie
-                data={chartData}
+                data={data}
                 dataKey="tasks"
                 nameKey="status"
                 innerRadius="60%"
@@ -83,10 +71,17 @@ export function TaskChart() {
                         >
                           <tspan
                             x={viewBox.cx}
+                            y={(viewBox.cy || 0) - 10}
+                            className="fill-muted-foreground text-2xl font-bold"
+                          >
+                            {data.reduce((sum, item) => sum + item.tasks, 0)}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
                             y={(viewBox.cy || 0) + 20}
                             className="fill-muted-foreground text-sm"
                           >
-                            Tasks
+                            Total Tasks
                           </tspan>
                         </text>
                       );
@@ -98,14 +93,14 @@ export function TaskChart() {
           </ResponsiveContainer>
         </ChartContainer>
         <div className="flex flex-wrap justify-center gap-4 mt-4">
-          {chartData.map((data) => (
-            <div key={data.status} className="flex items-center gap-2">
+          {data.map((task) => (
+            <div key={task.status} className="flex items-center gap-2">
               <div
                 className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: data.fill }}
+                style={{ backgroundColor: task.fill }}
               />
               <div className="text-zinc-50 text-xs font-medium">
-                {data.status.charAt(0).toUpperCase() + data.status.slice(1)}
+                {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
               </div>
             </div>
           ))}
@@ -121,10 +116,10 @@ import { MultiSelect } from "./components/ui/multi-select";
 import { useEffect, useState } from "react";
 
 const chartTechData = [
-  { tech: "Python", available: 306 },
-  { tech: "JavaScript", available: 225 },
-  { tech: "Golang", available: 323 },
-  { tech: "C++", available: 271 },
+  { tech: "Python", available: 2 },
+  { tech: "JavaScript", available: 0 },
+  { tech: "Golang", available: 0 },
+  { tech: "C++", available: 0 },
 ];
 
 const chartTechConfig = {
@@ -134,7 +129,7 @@ const chartTechConfig = {
   },
 } satisfies ChartConfig;
 
-export function TechChart() {
+export function TechChart({ data }: ITechChartProps) {
   return (
     <Card className="w-full h-full border-none bg-transparent">
       <CardContent className="pb-0">
@@ -143,14 +138,14 @@ export function TechChart() {
           className="mx-auto aspect-square max-w-[300px]"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={chartTechData}>
+            <RadarChart data={data}>
               <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
               <PolarAngleAxis
                 dataKey="tech"
                 tick={{ fill: "hsl(var(--muted-foreground))" }}
               />
               <PolarGrid stroke="hsl(var(--muted-foreground))" />
-              <PolarRadiusAxis domain={[0, 500]} tick={false} />
+              <PolarRadiusAxis domain={[0, 2 / 2]} tick={false} />
               <Radar
                 dataKey="available"
                 fill="hsl(var(--chart-1))"
@@ -162,13 +157,13 @@ export function TechChart() {
         </ChartContainer>
         <div className="flex justify-center mt-4">
           <div className="flex flex-wrap justify-center gap-4 text-zinc-50 text-xs font-medium">
-            {chartTechData.map((data) => (
-              <span key={data.tech} className="flex items-center gap-2 ">
+            {data.map((e) => (
+              <span key={e.tech} className="flex items-center gap-2 ">
                 <span
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: `hsl(var(--chart-1))` }}
                 ></span>
-                {data.tech}: {data.available}
+                {e.tech}: {e.available}
               </span>
             ))}
           </div>
@@ -183,6 +178,7 @@ interface Task {
   title: string;
   status: string;
   tags: string[];
+  author: string;
 }
 
 export const Explore = () => {
@@ -190,6 +186,7 @@ export const Explore = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchContext, setSearchContext] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFileteredTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -212,24 +209,22 @@ export const Explore = () => {
 
   const statusOptions = [
     { value: "done", label: "Done" },
-    { value: "inProgress", label: "In Progress" },
-    { value: "todo", label: "Todo" },
-    { value: "official", label: "Official" },
-    { value: "community", label: "Community" },
+    { value: "failed", label: "Failed" },
+    { value: "notdone", label: "Not Done" },
   ];
 
   const tagOptions = [
     { value: "Python", label: "Python" },
     { value: "JavaScript", label: "JavaScript" },
+    { value: "Golang", label: "Golang" },
+    { value: "C++", label: "C++" },
+    { value: "Official", label: "Official" },
+    { value: "Community", label: "Community" },
     { value: "Node.js", label: "Node.js" },
     { value: "Express", label: "Express" },
-    { value: "TensorFlow", label: "TensorFlow" },
-    { value: "AI", label: "AI" },
     { value: "React", label: "React" },
     { value: "Frontend", label: "Frontend" },
     { value: "SQL", label: "SQL" },
-    { value: "Database", label: "Database" },
-    { value: "Design", label: "Design" },
   ];
 
   useEffect(() => {
@@ -239,7 +234,9 @@ export const Explore = () => {
         selectedStatus.includes(task.status.toLowerCase().replace(" ", ""));
       const tagMatch =
         selectedTags.length === 0 ||
-        task.tags.some((tag) => selectedTags.includes(tag));
+        task.tags.some((tag) => {
+          selectedTags.includes(tag.toLowerCase().replace(" ", ""));
+        });
       const titleMatch = task.title
         .toLowerCase()
         .includes(searchContext.toLowerCase());
@@ -247,15 +244,69 @@ export const Explore = () => {
       return statusMatch && tagMatch && titleMatch;
     });
 
-    console.log(filteredTasks);
+    setFileteredTasks(filteredTasks);
   }, [selectedStatus, selectedTags, searchContext, tasks]);
+
+  const calcTaskCounts = (tasks: Task[]) => {
+    const counts = tasks.reduce(
+      (acc, task) => {
+        const authorType = task.author === "devlife" ? "official" : "community";
+        acc[authorType] = (acc[authorType] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    return [
+      {
+        status: "official",
+        tasks: counts.official || 0,
+        fill: "hsl(var(--official))",
+      },
+      {
+        status: "community",
+        tasks: counts.community || 0,
+        fill: "hsl(var(--community))",
+      },
+    ];
+  };
+
+  const calcTechCounts = (tasks: Task[]) => {
+    const counts = tasks.reduce(
+      (acc, task) => {
+        const techTags = task.tags.filter((tag) => {
+          const normalizedTag = tag.toLowerCase();
+          return (
+            normalizedTag === "python" ||
+            normalizedTag === "javascript" ||
+            normalizedTag === "golang" ||
+            normalizedTag === "c++"
+          );
+        });
+
+        techTags.forEach((tag) => {
+          acc[tag.toLowerCase()] = (acc[tag.toLowerCase()] || 0) + 1;
+        });
+
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    return [
+      { tech: "Python", available: counts["python"] || 0 },
+      { tech: "JavaScript", available: counts["javascript"] || 0 },
+      { tech: "Golang", available: counts["golang"] || 0 },
+      { tech: "C++", available: counts["c++"] || 0 },
+    ];
+  };
 
   return (
     <div className="min-h-screen h-full">
       <section className="mt-28 w-full max-w-7xl mx-auto lg:px-6 px-8">
         <div className="flex flex-col md:flex-row justify-center gap-8">
-          <TaskChart />
-          <TechChart />
+          <TaskChart data={calcTaskCounts(tasks)} />
+          <TechChart data={calcTechCounts(tasks)} />
         </div>
       </section>
       <section className="mt-12">
@@ -300,7 +351,7 @@ export const Explore = () => {
                 </tr>
               </thead>
               <tbody className="bg-zinc-600 divide-y divide-zinc-200">
-                {tasks.map((task) => (
+                {filteredTasks.map((task) => (
                   <tr
                     key={task.id}
                     className="cursor-pointer hover:bg-zinc-500 transition-colors"
