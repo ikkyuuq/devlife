@@ -51,6 +51,7 @@ export const Header = () => {
         credentials: "include",
       });
       setIsSignedIn(true);
+      window.location.reload();
     } catch (error) {
       console.error("Error signing in:", error);
     }
@@ -65,6 +66,7 @@ export const Header = () => {
         body: JSON.stringify(values),
         credentials: "include",
       });
+      window.location.reload();
     } catch (error) {
       console.error("Error signing up:", error);
     }
@@ -80,6 +82,7 @@ export const Header = () => {
         credentials: "include",
       });
       setIsSignedIn(false);
+      window.location.reload();
     } catch (error) {
       console.error("Error signing out:", error);
     }
