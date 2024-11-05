@@ -60,6 +60,7 @@ export const taskTable = pgTable("task", {
   objective: text("objective"), // objective of the task
   tags: text("tags").array().notNull(), // array of tags
   content: text("content").notNull(), // markdown content
+  author: text("author").notNull(),
   createdAt: timestamp("created_at", {
     withTimezone: true,
     mode: "date",
