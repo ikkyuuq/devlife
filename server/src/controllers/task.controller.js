@@ -15,14 +15,14 @@ export default class TaskController {
 
       const taskStatusMap = new Map(
         taskSubmissions.map((submission) => [
-          submission.task_id,
+          submission.taskId,
           submission.status,
         ]),
       );
 
       const tasksWithStatus = tasks.map((task) => ({
         ...task,
-        status: taskStatusMap.get(task.status) || "not done",
+        status: taskStatusMap.get(task.id) || "not done",
       }));
 
       return res.status(200).send({ tasksWithStatus });
@@ -47,7 +47,6 @@ export default class TaskController {
       }
 
       const data = await task.json();
-      console.log(data);
       return res.status(200).send(data);
     } catch (error) {
       return res.status(400).send({ error: error.message });
