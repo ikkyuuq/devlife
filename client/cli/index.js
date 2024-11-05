@@ -192,9 +192,9 @@ app
     );
   });
 
-// Retry logic to handle multiple-line input failure and attempt single-line
+// Retry logic to handle multiple-line input and attempt single-line
 const runTestWithRetry = async (file, input, setTitle) => {
-  // First, try with multiple-line input
+  // try with multiple-line input
   await new Promise((resolve) => setTimeout(resolve, 600));
 
   let result = await testRunner(file, input);
@@ -218,24 +218,29 @@ const testRunner = async (file, input) => {
     switch (true) {
       case file.endsWith(".py"):
         startTime = performance.now();
-        const child = spawn("python", [file]);
+        const child = spawn("python3", [file]);
         child.stdout.on("data", (data) => {
           output += data.toString();
-        });
-
-        child.stderr.on("data", (data) => {
-          error += data.toString();
         });
 
         child.on("close", (code) => {
           endTime = performance.now();
           const timeTaken = endTime - startTime;
+          // Try to convert output to number if possible
+          let parsedOutput = output.trim();
+          if (!isNaN(parsedOutput)) {
+            parsedOutput = Number(parsedOutput);
+          }
           resolve({
-            output: output.trim(),
+            output: parsedOutput,
             error: error.trim(),
             code,
             timeTaken,
           });
+        });
+
+        child.stderr.on("data", (data) => {
+          error += data.toString();
         });
 
         try {
