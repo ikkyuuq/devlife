@@ -29,7 +29,7 @@ function SignForm({ form, onSubmit, sign }: SignFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="example@email.com" {...field} />
+                <Input placeholder="example@email.com" {...field} required />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -42,7 +42,12 @@ function SignForm({ form, onSubmit, sign }: SignFormProps) {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="********" {...field} />
+                <Input
+                  type="password"
+                  placeholder="********"
+                  {...field}
+                  required
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
