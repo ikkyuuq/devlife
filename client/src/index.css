@@ -35,8 +35,8 @@ html {
     --done: 142 76% 36%;
     --in-progress: 217 91% 60%;
     --todo: 48 96% 53%;
-    --official: 0 100% 100%;
-    --community: 326 100% 74%;
+    --official: 100 100% 74%;
+    --community: 200 100% 74%;
     --radius: 0.5rem
   }
   .dark {
