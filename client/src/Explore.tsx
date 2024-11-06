@@ -1,4 +1,5 @@
 import { Card, CardContent } from "./components/ui/card";
+import { Button } from "./components/ui/button";
 import {
   Label,
   Pie,
@@ -112,15 +113,9 @@ export function TaskChart({ data }: ITaskChartProps) {
 
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import { Input } from "./components/ui/input";
+import { Pencil, Trash2 } from "lucide-react";
 import { MultiSelect } from "./components/ui/multi-select";
 import { useEffect, useState } from "react";
-
-const chartTechData = [
-  { tech: "Python", available: 2 },
-  { tech: "JavaScript", available: 0 },
-  { tech: "Golang", available: 0 },
-  { tech: "C++", available: 0 },
-];
 
 const chartTechConfig = {
   available: {
@@ -187,6 +182,7 @@ export const Explore = () => {
   const [searchContext, setSearchContext] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFileteredTasks] = useState<Task[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -197,6 +193,7 @@ export const Explore = () => {
       if (!userData.user.id) {
         return;
       }
+      setCurrentUserId(userData.user.id);
       const tasksResp = await fetch(
         `http://localhost:3000/task/status/${userData.user.id}`,
       );
@@ -208,7 +205,7 @@ export const Explore = () => {
   }, []);
 
   const statusOptions = [
-    { value: "done", label: "Done" },
+    { value: "passed", label: "Passed" },
     { value: "failed", label: "Failed" },
     { value: "notdone", label: "Not Done" },
   ];
@@ -335,45 +332,115 @@ export const Explore = () => {
                 placeholder="Search title"
                 onChange={(e) => setSearchContext(e.target.value)}
               />
+              <Button>
+                <a href="/create-task">Create Task</a>
+              </Button>
             </div>
-            <table className="min-w-full shadow-sm rounded-lg overflow-hidden">
-              <thead className="bg-zinc-800">
+            <table className="min-w-full shadow-md rounded-lg overflow-hidden">
+              <thead className="bg-zinc-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-50 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-zinc-300 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-50 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-zinc-300 uppercase tracking-wider">
                     Title
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-50 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-zinc-300 uppercase tracking-wider">
                     Tags
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-zinc-600 divide-y divide-zinc-200">
-                {filteredTasks.map((task) => (
+              <tbody className="bg-zinc-700 divide-y divide-zinc-600">
+                {filteredTasks.map((task, index) => (
                   <tr
                     key={task.id}
-                    className="cursor-pointer hover:bg-zinc-500 transition-colors"
+                    className={`cursor-pointer hover:bg-zinc-600 transition-colors ${
+                      index % 2 === 0 ? "bg-zinc-800" : "bg-zinc-700"
+                    }`}
                     onClick={() => (window.location.href = `/task/${task.id}`)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {task.status}
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          task.status.toLowerCase().replace(" ", "") ===
+                          "passed"
+                            ? "bg-green-500 text-green-100"
+                            : task.status.toLowerCase().replace(" ", "") ===
+                                "failed"
+                              ? "bg-red-500 text-red-100"
+                              : "bg-gray-500 text-gray-100"
+                        }`}
+                      >
+                        {task.status.charAt(0).toUpperCase() +
+                          task.status.slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-300 border-none">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-100 border-none">
                       {task.title}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
+                      <div className="flex flex-wrap gap-2">
+                        {task.tags.map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 text-xs rounded-md bg-zinc-600 text-zinc-200"
+                          >
+                            {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {task.tags.map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 mr-2"
-                        >
-                          {tag}
-                        </span>
-                      ))}
+                      {task.author === currentUserId && (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-zinc-50 hover:text-zinc-200 hover:bg-zinc-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = `/edit-task/${task.id}`;
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-zinc-700"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (
+                                window.confirm(
+                                  "Are you sure you want to delete this task?",
+                                )
+                              ) {
+                                const resp = await fetch(
+                                  `http://localhost:3000/task/${task.id}`,
+                                  {
+                                    method: "DELETE",
+                                    credentials: "include",
+                                  },
+                                );
+                                if (!resp.ok) {
+                                  console.error(
+                                    "Failed to delete task:",
+                                    task.id,
+                                  );
+                                  return;
+                                }
+                                setTasks(tasks.filter((t) => t.id !== task.id));
+                                console.log("Deleted task:", task.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
