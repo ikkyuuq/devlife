@@ -18,7 +18,7 @@ const tagColors: Record<string, { bg: string; text: string; border: string }> =
       text: "text-cyan-400",
       border: "border-cyan-400/20",
     },
-    algorithms: {
+    algorithm: {
       bg: "bg-purple-500/10",
       text: "text-purple-500",
       border: "border-purple-500/20",
@@ -33,12 +33,12 @@ const tagColors: Record<string, { bg: string; text: string; border: string }> =
       text: "text-red-500",
       border: "border-red-500/20",
     },
-    strings: {
+    string: {
       bg: "bg-pink-500/10",
       text: "text-pink-500",
       border: "border-pink-500/20",
     },
-    arrays: {
+    array: {
       bg: "bg-indigo-500/10",
       text: "text-indigo-500",
       border: "border-indigo-500/20",
@@ -55,11 +55,11 @@ const getTagColor = (tag: string) => {
   );
 };
 
-import MarkDown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { toast, Toaster } from "sonner";
 import { Button } from "@/components/ui/button";
-import { group } from "console";
+
+import MarkDown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface TestCase {
   input: string[];
@@ -96,7 +96,7 @@ export const Task = () => {
         const cachedData = localStorage.getItem(`task-${id}`);
         if (cachedData) {
           const { data: taskData, timestamp } = JSON.parse(cachedData);
-          if (Date.now() - timestamp < 3600000) {
+          if (Date.now() - timestamp < 120000) {
             setData(taskData);
             setLoading(false);
             return;
@@ -148,7 +148,7 @@ export const Task = () => {
   const testCases = JSON.parse(data.task.tests).data;
 
   return (
-    <div className="mt-28 w-full max-w-7xl mx-auto lg:px-6 px-8">
+    <div className="w-full max-w-7xl mx-auto lg:px-6 px-8 my-28">
       <h1 className="text-2xl font-bold mb-4 text-green-400">
         {data.task.title}
       </h1>
@@ -184,9 +184,9 @@ export const Task = () => {
         </div>
       </div>
       <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2 text-zinc-800">Test Cases</h2>
+        <h2 className="text-xl font-semibold mb-2 text-zinc-500">Test Cases</h2>
         <div className="space-y-2">
-          {testCases.map((test: TestCase, index: number) => (
+          {testCases.slice(0, 3).map((test: TestCase, index: number) => (
             <div
               key={index}
               className="p-4 rounded-lg bg-gradient-to-r from-zinc-800/80 via-zinc-800 to-zinc-800/80 border border-zinc-700/50 shadow-lg hover:shadow-xl transition-all duration-300"
@@ -197,16 +197,9 @@ export const Task = () => {
                   <p className="font-semibold text-emerald-400">Input:</p>
                 </div>
                 <div className="bg-black/20 rounded-md p-3 min-h-12">
-                  {test.input.slice(0, 3).map((line, i) => {
-                    if (line.trim() === "") {
-                      return;
-                    }
-                    return (
-                      <code key={i} className="block font-mono text-zinc-300">
-                        {line}
-                      </code>
-                    );
-                  })}
+                  <code className="block font-mono text-zinc-300">
+                    {test.input.join("\n")}
+                  </code>
                 </div>
               </div>
               <div className="text-zinc-300">
@@ -218,7 +211,7 @@ export const Task = () => {
                 </div>
                 <div className="bg-black/20 rounded-md p-3">
                   <code className="block font-mono text-zinc-300">
-                    {test.expected}
+                    {test.expected.toString()}
                   </code>
                 </div>
               </div>
