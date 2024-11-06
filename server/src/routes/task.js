@@ -103,6 +103,9 @@ taskRouter.get("/task/:id", async (req, res) =>
  *                     type: string
  *                   objective:
  *                     type: string
+ *                   author:
+ *                     type: string
+ *                     example: devlife
  *                   tags:
  *                     type: array
  *                     items:
@@ -165,4 +168,31 @@ taskRouter.post("/task", async (req, res) =>
  */
 taskRouter.put("/task", async (req, res) =>
   taskController.updateTask(req, res),
+);
+
+/**
+ * @openapi
+ * /task/{id}:
+ *   delete:
+ *     description: Delete task by id
+ *     summary: Delete task by id
+ *     tags:
+ *       - Tasks
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Task id
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Task deleted successfully
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: Task not found
+ */
+taskRouter.delete("/task/:id", async (req, res) =>
+  taskController.deleteTask(req, res),
 );

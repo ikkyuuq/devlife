@@ -6,6 +6,23 @@ export default class TaskController {
     this.#taskService = taskService;
   }
 
+  async deleteTask(req, res) {
+    try {
+      const taskId = await req.params.id;
+      if (!taskId) {
+        return res.status(400).send({ error: "Task ID is required" });
+      }
+
+      await this.#taskService.deleteTestTask(taskId);
+      await this.#taskService.deleteTask(taskId);
+
+      return res.status(200).send({ message: "Task deleted" });
+    } catch (error) {
+      console.error("Error in deleteTask:", error);
+      return res.status(400).send({ error: error.message });
+    }
+  }
+
   async getTasksWithStatus(req, res) {
     try {
       const userId = req.params.userId;

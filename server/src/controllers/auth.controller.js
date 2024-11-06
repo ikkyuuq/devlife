@@ -67,6 +67,7 @@ export default class AuthController {
   }
 
   async emailVerification(req, res) {
+    const { code } = req.body;
     // Validate the current session with the session cookie
     const { session, user } = await this.#authService.validateSession(
       req.cookies.devlife_session,
@@ -87,8 +88,8 @@ export default class AuthController {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: req.body.userId,
-          code: req.body.code,
+          userId: user.id,
+          code,
         }),
       },
     );

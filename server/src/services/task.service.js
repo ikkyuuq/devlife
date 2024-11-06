@@ -7,6 +7,28 @@ export default class TaskService {
     this.#db = db;
   }
 
+  async deleteTestTask(taskId) {
+    try {
+      await this.#db
+        .delete(schema.taskTestTable)
+        .where(eq(schema.taskTestTable.taskId, taskId));
+    } catch (error) {
+      console.error("Error in deleteTestTask:", error);
+      return null;
+    }
+  }
+
+  async deleteTask(taskId) {
+    try {
+      await this.#db
+        .delete(schema.taskTable)
+        .where(eq(schema.taskTable.id, taskId));
+    } catch (error) {
+      console.error("Error in deleteTask:", error);
+      return null;
+    }
+  }
+
   async getTaskSubmissionsByUserId(userId) {
     const submissions = await this.#db.query.taskSubmissionTable.findMany({
       where: eq(schema.taskSubmissionTable.userId, userId),
@@ -50,6 +72,7 @@ export default class TaskService {
         content: task.content,
         createdAt: new Date(),
         updatedAt: new Date(),
+        author: task.author || "Anonymous",
       })
       .returning();
 
