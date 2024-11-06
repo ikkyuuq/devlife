@@ -2,6 +2,7 @@ import { Code, Terminal, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import bgDevlifeDesktop from "./assets/bg-devlife-desktop.mp4";
 import bgDevlifeMobile from "./assets/bg-devlife-mobile.mp4";
+import { toast, Toaster } from "sonner";
 
 export const Home = () => {
   return (
@@ -54,12 +55,19 @@ export const Home = () => {
               <div className="flex justify-center">
                 <div
                   className="text-sm sm:text-base lg:text-lg py-2 px-4 sm:py-3 sm:px-6 lg:py-6 lg:px-10 bg-gradient-to-r from-green-400 to-sky-300 hover:bg-gradient-to-r hover:from-pink-400  hover:to-purple-300 text-white font-bold transition-all duration-300 cursor-pointer rounded-md"
-                  onClick={() => {
-                    navigator.clipboard.writeText("npm install devlife@latest");
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(
+                      "npm install devlife@latest",
+                    );
+                    toast("Copied to clipboard ", {
+                      type: "success",
+                      duration: 1000,
+                    });
                   }}
                 >
                   npm install devlife@latest <span>📋</span>
                 </div>
+                <Toaster />
               </div>
             </div>
           </div>
